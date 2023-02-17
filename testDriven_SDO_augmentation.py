@@ -1,3 +1,17 @@
+'''
+Team objective:
+1. Create a list of augmentation functions for training data
+
+Important details on the project:
+1. The model takes in a fixed size image and outputs a vector representation of the image
+2. The model uses the vector representation to return similar images
+
+Where we left off:
+1. Coordinates are wrong when grabbing adjacent tiles
+2. change the equation for the coordinates
+'''
+
+import os
 import unittest
 import numpy as np
 import pickle
@@ -6,6 +20,13 @@ import cv2 as cv
 
 DATA_DIR = '/home/schatterjee/Documents/projects/HITS/data/euv/tiles/'
 FILE_NAME = 'tile_20230206_000634_1024_0171_0320_0768.p'
+l = len("tile_20230206_000634_1024_0171_")
+
+EXISTING_FILES = []
+
+for root, dir, files in os.walk(DATA_DIR):
+    for file in files:
+        EXISTING_FILES.append(file)
 
 def read_image(image_loc):
     image = pickle.load(open(image_loc, 'rb'))
@@ -36,10 +57,30 @@ def translate_image( image, distanceX, distanceY):
     # img = cv2.imread("lenna.png")
     # crop_img = img[y:y+h, x:x+w] # <- y, x are range of rows.h, w are range of cols. New cropped img is stored
 
+#example: 'tile_20230206_000634_1024_0171_0320_0768.p'
+# 0320 is the x coordinate and 0768 is the y coordinate
+# we need to grab all adjacent tiles and combine them into one image
+def adj_imgs(file_name, ):
+    l = len("tile_20230206_000634_1024_0171_")
+    iStart = int(file_name[l:l+4])
+    jStart = int(file_name[l+5:l+9])
+    coordinates = [(0, 0), (1, 0), (2, 0), (1, 0), (1, 2), (2, 0), (2, 1), (2, 2)]
+    file_list = []
     
+    for i,j in coordinates:
+        i_s = iStart - 64 + i * 64
+        j_s = jStart - 64 + j * 64
+
+        tile_name = f"{file_name[0:l]}{str(i_s).zfill(4)}_{str(j_s).zfill(4)}.p"
+        file_list.append(tile_name)
+
+    return file_list 
+
+for name in adj_imgs(FILE_NAME):
+    print(f"{name}")
     
-''''dim = (width, height)
-resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)'''
+#dim = (width, height)
+#resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
 def crop(image, x1, x2, y1, y2):
     return image[x1:x2, y1:y2]
@@ -88,16 +129,14 @@ class Tests_on_Augmentations(unittest.TestCase):
         image = read_image(DATA_DIR+FILE_NAME)
         image = brighten_image(image,brightness=2)
         self.assertNotEqual(np.max(image), np.min(image))
+    
+    def test_tile_start(self):
+        self.assertEqual(int(FILE_NAME[l:l+4]),320)
 
+    def test_adjacent_valid(self):
+        f = adj_imgs(FILE_NAME)
+        for i in f:
+            self.assertEqual(i in EXISTING_FILES, True)
+                
 if __name__=='__main__':
     unittest.main()
-
-
-'''
-Team objective:
-1. Create a list of augmentation functions for training data
-
-Important details:
-1. The model takes in a fixed size image and outputs a vector representation of the image
-2. The model uses the vector representation to return similar images
-'''
