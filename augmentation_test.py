@@ -119,6 +119,6 @@ class Tests_on_Augmentations(unittest.TestCase):
 if __name__=='__main__':
     unittest.main()
     
-    image = read_image(DATA_DIR + FILE_NAME)
+    #image = read_image(DATA_DIR + FILE_NAME)
     #check_brightness(image, range=[0.5,1,2])
     #check_translation(image, range=[(0, 0), (-10, 0), (10, -20)])
