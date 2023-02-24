@@ -1,14 +1,16 @@
 '''
 Team objective:
 1. Create a list of augmentation functions for training data
+2. Apply a set of augmentations selected in random order or by the user
 
 Important details on the project:
 1. The model takes in a fixed size image and outputs a vector representation of the image
 2. The model uses the vector representation to return similar images
 
-Where we left off:
-1. Coordinates are wrong when grabbing adjacent tiles
-2. change the equation for the coordinates
+Plan for Feb 24:
+1. Create a super image by combing adjacent tiles
+2. Perform a set of augmentations depicted by a target dictionary
+3. Work on the documentation of the code
 '''
 
 import os
