@@ -17,6 +17,8 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import cv2 as cv
+from augmentation import Augmentations
+
 
 DATA_DIR = '/home/schatterjee/Documents/projects/HITS/data/euv/tiles/'
 FILE_NAME = 'tile_20230206_000634_1024_0171_0320_0768.p'
@@ -28,82 +30,43 @@ for root, dir, files in os.walk(DATA_DIR):
     for file in files:
         EXISTING_FILES.append(file)
 
+
+
+
 def read_image(image_loc):
-    image = pickle.load(open(image_loc, 'rb'))
+    # := : assign and return the variable
+    image = pickle.load(imfile := open(image_loc, 'rb'))
+    imfile.close()
+    
     return image
 
-def brighten_image(image,brightness=1):
-    image = image.astype(float)/255
-    image_out = image**brightness
-    return image_out
+    #dim = (width, height)
+    #resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
-def check_brightness(image,range=[0.5,1,2]):
-    for i,b in enumerate(range):
-        plt.subplot(1,len(range),i+1)
-        im = brighten_image(image, brightness=b)
-        plt.imshow(im)
-    plt.show()
+ #example: 'tile_20230206_000634_1024_0171_0320_0768.p'
+    # 0320 is the x coordinate and 0768 is the y coordinate
+    # we need to grab all adjacent tiles and combine them into one image
+def adj_imgs(file_name):
+        l = len("tile_20230206_000634_1024_0171_")
+        iStart = int(file_name[l:l+4])
+        jStart = int(file_name[l+5:l+9])
+        coordinates = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1), (2, 2)]
 
+        file_list = []
+        
+        for i,j in coordinates:
+            i_s = iStart - 64 + i * 64
+            j_s = jStart - 64 + j * 64
 
-# https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html
-def translate_image( image, distanceX, distanceY):
-    rows,cols = image.shape
-    M = np.float32([[1, 0, distanceX], [0, 1, distanceY]])
-    image = cv.warpAffine(image,M,(cols,rows))
-    # image = crop(image, cols, cols+distanceY, rows, rows+distanceX)
-    # image = resize(image, 64, 64)
-    return image
-    # Suggestion: 
-    # img = cv2.imread("lenna.png")
-    # crop_img = img[y:y+h, x:x+w] # <- y, x are range of rows.h, w are range of cols. New cropped img is stored
+            tile_name = f"{file_name[0:l]}{str(i_s).zfill(4)}_{str(j_s).zfill(4)}.p"
+            file_list.append(tile_name)
 
-#example: 'tile_20230206_000634_1024_0171_0320_0768.p'
-# 0320 is the x coordinate and 0768 is the y coordinate
-# we need to grab all adjacent tiles and combine them into one image
-def adj_imgs(file_name, ):
-    l = len("tile_20230206_000634_1024_0171_")
-    iStart = int(file_name[l:l+4])
-    jStart = int(file_name[l+5:l+9])
-    coordinates = [(0, 0), (1, 0), (2, 0), (1, 0), (1, 2), (2, 0), (2, 1), (2, 2)]
-    file_list = []
-    
-    for i,j in coordinates:
-        i_s = iStart - 64 + i * 64
-        j_s = jStart - 64 + j * 64
-
-        tile_name = f"{file_name[0:l]}{str(i_s).zfill(4)}_{str(j_s).zfill(4)}.p"
-        file_list.append(tile_name)
-
-    return file_list 
-
-for name in adj_imgs(FILE_NAME):
-    print(f"{name}")
-    
-#dim = (width, height)
-#resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
-
-def crop(image, x1, x2, y1, y2):
-    return image[x1:x2, y1:y2]
-
-def resize(image, width, height):
-    dim = (width, height)
-    return cv.resize(image, dim, interpolation = cv.INTER_AREA)
-    
-
-def check_translation(image,range=[(0,0)]):
-    for i,t in enumerate(range):
-        plt.subplot(1,len(range),i+1)
-        im = translate_image(image, t[0], t[1])
-        plt.imshow(im)
-    plt.show()
-
+        return file_list 
 
 ### json file with a list of aug: object like structure -> image, : List of aougment preformed, and their description
 ### 
 
-image = read_image(DATA_DIR + FILE_NAME)
-#check_brightness(image, range=[0.5,1,2])
-check_translation(image, range=[(0, 0), (-10, 0), (10, -20)])
+
 
 # Remove the black void:
 # 1. Find dimensions to zoom in to
@@ -112,22 +75,34 @@ check_translation(image, range=[(0, 0), (-10, 0), (10, -20)])
 
 
 class Tests_on_Augmentations(unittest.TestCase):
-    def test_XYZ(self):
+    def setUp(self):
+        DATA_DIR = '/home/schatterjee/Documents/projects/HITS/data/euv/tiles/'
+        FILE_NAME = 'tile_20230206_000634_1024_0171_0320_0768.p'
+        self.image = read_image(DATA_DIR + FILE_NAME)
+        augment_list = {"brightness": 1, "translate": (0,0), "zoom": 1, "rotate": 90}
+        self.augmentations = Augmentations(self.image, augment_list)
         self.assertEqual(True,True)
 
+    def test_rotate(self):
+        # 2/23/23 - We want to try 45 degrees and see what it does to the edges
+        # for 2/24 meeting
+        image_ro = self.augmentations.rotate_image()                                  
+        plt.subplot(1,2,1)
+        plt.imshow(self.image, vmin = 0, vmax = 255)
+        plt.subplot(1,2,2)
+        plt.imshow(image_ro, vmin = 0, vmax = 255)
+        plt.show()
+
     def test_dim(self):
-        image = read_image(DATA_DIR + FILE_NAME)
-        self.assertEqual(len(image.shape), 2)
+        self.assertEqual(len(self.image.shape), 2)
 
     def test_resolution(self):
-        image = read_image(DATA_DIR + FILE_NAME)
-        image_tr = translate_image(image, 15, 15)
-        self.assertEqual(image.shape, (64, 64))
+        image_tr = self.augmentations.translate_image()
+        self.assertEqual(self.image.shape, (64, 64))
         self.assertEqual(image_tr.shape, (64, 64))
 
     def test_range(self):
-        image = read_image(DATA_DIR+FILE_NAME)
-        image = brighten_image(image,brightness=2)
+        image = self.augmentations.brighten_image()
         self.assertNotEqual(np.max(image), np.min(image))
     
     def test_tile_start(self):
@@ -137,6 +112,11 @@ class Tests_on_Augmentations(unittest.TestCase):
         f = adj_imgs(FILE_NAME)
         for i in f:
             self.assertEqual(i in EXISTING_FILES, True)
+            
                 
 if __name__=='__main__':
     unittest.main()
+    
+    image = read_image(DATA_DIR + FILE_NAME)
+    #check_brightness(image, range=[0.5,1,2])
+    #check_translation(image, range=[(0, 0), (-10, 0), (10, -20)])
