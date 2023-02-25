@@ -6,16 +6,29 @@ Important details on the project:
 1. The model takes in a fixed size image and outputs a vector representation of the image
 2. The model uses the vector representation to return similar images
 
-Where we left off:
-1. Coordinates are wrong when grabbing adjacent tiles
-2. change the equation for the coordinates
 '''
 
 import numpy as np
 import cv2 as cv
 
 
+
 class Augmentations():
+    """
+    The purpose of this class is to hold a dictionary of all different augmentations usable
+
+    Parameters used: 
+        image (uint8/float)
+        self 
+        dictionary of augmentations
+            rotation    (float) : degrees
+            brightness  (float) : 1 = no brightness transformation applied
+            zoom        (float) : 1 = 1X zoom
+            translate   (integer, integer) : (x,y) || (0,0)  = no translation 
+
+    Combination of augmentations: 
+    """
+
     # https://www.pythoncheatsheet.org/cheatsheet/dictionaries
     def __init__(self, image, dct={"brightness": 1, "translate": (0,0), "zoom": 1, "rotate": 0}):
         self.image = image
