@@ -7,11 +7,9 @@ Important details on the project:
 1. The model takes in a fixed size image and outputs a vector representation of the image
 2. The model uses the vector representation to return similar images
 
-Plan for Feb 24:
-1. Test rotated image for 45 de
-2. Create a super image by combing adjacent tiles
-3. Perform a set of augmentations depicted by a target dictionary
-4. Work on the documentation of the code
+Plan for Mar 2:
+1. Perform a set of augmentations depicted by a target dictionary
+2. Work on the documentation of the code
 '''
 
 import os
