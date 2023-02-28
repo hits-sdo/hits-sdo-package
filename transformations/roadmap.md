@@ -1,4 +1,3 @@
-^  *-*      
 # Steps from reading file to outputting and saving tiles in a directory
 - [ ] File source (location)
     - local directory
