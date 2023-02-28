@@ -11,13 +11,20 @@
   - [ ] Source
   - [ ] File/image type
   - [ ] isValid bool to check for errors
+  - [ ] file_footprint{isValid: , file_type: , source: }
   - [ ] Member Functions
 	- [ ] Getter functions
       - Get file name
       - Get image type
       - Get isValid
       - Get numpy array
+      - get timestamp 
+      -get numpy
+      -fetch remote
+      -fetch local
+      -
     - [ ] Setter functions
+
       - Set file name
       - Set image type
       - Set isValid (not publicly exposed)
@@ -25,6 +32,35 @@
       - handle both png or fits, converting into numbpy <== revisit
     - [ ] __string__ (observer function)
       - Print fucntion to check to see if the variables were assigned 
+
+- [ ] Define Preprocessing Class
+  - [ ] Data Attributes
+   - imageSource
+   - imageShape
+   - preprocessing_footprint{brightness: , scale: , contrast: , paddingType: }
+      tilingFootprint
+        tileWidth: tuple/dictionary
+        tileHeight: tuple/dictionary
+        timeInterval: tuple/dictionary
+  - [ ] get image shape
+  - [ ] get image size
+  - [ ] get min/max pixels
+  - [ ] create standard (& define) brightness
+  - [ ] padding algorithm
+  - [ ] standardize pixel dimensions
+    - scale pixels
+  - [ ] getFrequencies
+  
+- [ ] Tiling Class
+  - [ ] tf.images.extract_patches to divide into patches
+    - [ ] Should we use the patchify library?
+    - [ ] (Strides, rates...?)
+  - [ ] tilingFootprint - dictionary
+    - [ ] json of changes
+    - [ ] tile dimensions
+    - [ ] strides
+    - [ ] etc...
+      
 
 - [ ] Define Dataloader
 
@@ -45,3 +81,4 @@
 
 - [ ] Save tiles into an output directory
   - Check if directory exists...
+
