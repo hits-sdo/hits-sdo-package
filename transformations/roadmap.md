@@ -32,7 +32,7 @@
       - handle both png or fits, converting into numbpy <== revisit
     - [ ] __string__ (observer function)
       - Print fucntion to check to see if the variables were assigned 
-
+**********************************
 - [ ] Define Preprocessing Class
   - [ ] Data Attributes
    - imageSource
@@ -50,7 +50,7 @@
   - [ ] standardize pixel dimensions
     - scale pixels
   - [ ] getFrequencies
-  
+  **********************************************************
 - [ ] Tiling Class
   - [ ] tf.images.extract_patches to divide into patches
     - [ ] Should we use the patchify library?
