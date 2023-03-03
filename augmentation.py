@@ -30,13 +30,17 @@ class Augmentations():
     """
 
     # https://www.pythoncheatsheet.org/cheatsheet/dictionaries
-    def __init__(self, image, dct={"brightness": 1, "translate": (0,0), "zoom": 1, "rotate": 0}):
+    def __init__(self, image, dct={"brightness": 1, "translate": (0,0), "zoom": 1, "rotate": 0, "h_flip": False, "v_flip": False, 'blur':(1,1)}):
         self.image = image
         self.zoom = dct["zoom"]
         self.brightness = dct["brightness"]
         self.translate = dct["translate"] # pixels to translate the image by
         self.rotation = dct["rotate"] # degrees to rotate the image by
+        self.h_flip = dct["h_flip"]
+        self.v_flip = dct["v_flip"] 
+        self.blur = dct['blur'] # level of blur we want on the image (increase values for more blur)
         """"""
+
     def rotate_image(self):
         s = self.image.shape
         cy = (s[0]-1)/2
@@ -65,6 +69,46 @@ class Augmentations():
         dim = self.image.shape
         return cv.resize(self.image, (self.zoom*dim[0],self.zoom*dim[1]), interpolation = cv.INTER_AREA)
         
+    def h_flip_image(self):
+        image = self.image
+        if self.v_flip == True:
+            image = cv.flip(image, 1) 
+        return image
+    
+    def v_flip_image(self):
+        image = self.image
+        if self.h_flip == True:
+            image = cv.flip(image, 0) 
+        return image
+    
+    def blur_image(self):
+        image = cv.blur(self.image,(self.blur[0],self.blur[1]), 0)
+        return image
+       # image = cv2.blur(image, ksize) 
+       # # ksize
+        #ksize = (30, 30)
+        # Syntax: cv2.blur(src, ksize[, dst[, anchor[, borderType]]])
+
+"""
+# Average Blurring -> can do even kernel values
+image = cv2.blur(image, (10, 10))
+
+# Gaussian Blurring -> can only take odd kernal values
+# Again, you can change the kernel size
+gausBlur = cv2.GaussianBlur(img, (5,5),0) 
+cv2.imshow('Gaussian Blurring', gausBlur)
+cv2.waitKey(0)
+  
+# Median blurring
+medBlur = cv2.medianBlur(img,5)
+cv2.imshow('Media Blurring', medBlur)
+cv2.waitKey(0)
+  
+# Bilateral Filtering
+bilFilter = cv2.bilateralFilter(img,9,75,75)
+cv2.imshow('Bilateral Filtering', bilFilter)
+cv2.waitKey(0)
+cv2.destroyAllWindows()"""
 
 
 ### json file with a list of aug: object like structure -> image, : List of aougment preformed, and their description
