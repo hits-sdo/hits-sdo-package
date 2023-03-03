@@ -20,9 +20,11 @@ import matplotlib.pyplot as plt
 import cv2 as cv
 from augmentation import Augmentations
 
+"""glob.glob('/home/geeks/Desktop/gfg/data.txt')"""
 
-DATA_DIR = '/home/schatterjee/Documents/projects/HITS/data/euv/tiles/'
-FILE_NAME = 'tile_20230206_000634_1024_0171_0320_0768.p'
+
+DATA_DIR = '/home/schatterjee/Documents/projects/HITS/data/mag/tiles/'
+FILE_NAME = 'tile_20230206_000000_1024_HMIB_0320_0768.p'
 l = len("tile_20230206_000634_1024_0171_")
 
 EXISTING_FILES = []
@@ -85,11 +87,11 @@ def stitch_adj_imgs(data_dir, file_name):
 
 class Tests_on_Augmentations(unittest.TestCase):
     def setUp(self):
-        DATA_DIR = '/home/schatterjee/Documents/projects/HITS/data/euv/tiles/'
-        FILE_NAME = 'tile_20230206_000634_1024_0171_0320_0768.p'
+        DATA_DIR = '/home/schatterjee/Documents/projects/HITS/data/mag/tiles/'
+        FILE_NAME = 'tile_20230206_000000_1024_HMIB_0320_0768.p'
         self.image = read_image(DATA_DIR + FILE_NAME)
         self.superimage = stitch_adj_imgs(DATA_DIR, FILE_NAME)
-        augment_list = {"brightness": 1, "translate": (0,0), "zoom": 1, "rotate": 45}
+        augment_list = {"brightness": 1, "translate": (0,0), "zoom": 1, "rotate": 45, "h_flip": True, "v_flip": True, 'blur':(2,2)}
         self.augmentations = Augmentations(self.superimage, augment_list)
         self.assertEqual(True,True)
 
@@ -102,7 +104,7 @@ class Tests_on_Augmentations(unittest.TestCase):
         # plt.subplot(1,2,2)
         # plt.imshow(image_ro, vmin = 0, vmax = 255)                           
         plt.subplot(1,2,1)
-        plt.imshow(self.superimage[self.image.shape[0]:2*self.image.shape[0],64:128], vmin = 0, vmax = 255)
+        plt.imshow(self.superimage[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
         plt.subplot(1,2,2)
         plt.imshow(image_ro[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
         plt.show()
@@ -113,7 +115,7 @@ class Tests_on_Augmentations(unittest.TestCase):
     def test_resolution(self):
         image_tr = self.augmentations.translate_image()
         self.assertEqual(self.image.shape, (64, 64))
-        self.assertEqual(image_tr.shape, (64, 64))
+        self.assertEqual(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]].shape, (64, 64))
 
     def test_range(self):
         image = self.augmentations.brighten_image()
@@ -130,7 +132,33 @@ class Tests_on_Augmentations(unittest.TestCase):
         # plt.imshow(superImage, vmin = 0, vmax = 255)
         # plt.show()
             
-                
+    def test_flip(self):
+        image_tr = self.augmentations.v_flip_image()
+        # ensuring same size
+        self.assertEqual(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]].shape, self.image.shape)
+
+        plt.subplot(1,2,1)
+        plt.imshow(self.image, vmin = 0, vmax = 255)
+        plt.subplot(1,2,2)
+        plt.imshow(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
+        plt.show()
+    
+    def test_blur(self):
+        image_tr = self.augmentations.blur_image()
+        # ensuring same size
+        self.assertEqual(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]].shape, self.image.shape)
+
+        plt.subplot(1,2,1)
+        plt.imshow(self.image, vmin = 0, vmax = 255)
+        plt.subplot(1,2,2)
+        plt.imshow(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
+        plt.show()
+
+    def test_pole_flip(self):
+        # flip and ensure different image
+        image_tr = self.augmentations.pole_flip_image()
+        self.assertTrue(self.image.all() == self.image.all())
+
 if __name__=='__main__':
     unittest.main()
     
