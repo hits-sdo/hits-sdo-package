@@ -7,9 +7,10 @@ Important details on the project:
 1. The model takes in a fixed size image and outputs a vector representation of the image
 2. The model uses the vector representation to return similar images
 
-Plan for Mar 2:
-1. Perform a set of augmentations depicted by a target dictionary
-2. Work on the documentation of the code
+Plan for Mar 9:
+1. Add polarity flip
+2. Perform a combination of augmentations depicted by a target dictionary
+3. Work on the documentation of the code
 '''
 
 import os
@@ -107,6 +108,7 @@ class Tests_on_Augmentations(unittest.TestCase):
         plt.imshow(self.superimage[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
         plt.subplot(1,2,2)
         plt.imshow(image_ro[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
+        plt.title('rotated image (45 deg)')
         plt.show()
 
     def test_dim(self):
@@ -141,6 +143,7 @@ class Tests_on_Augmentations(unittest.TestCase):
         plt.imshow(self.image, vmin = 0, vmax = 255)
         plt.subplot(1,2,2)
         plt.imshow(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
+        plt.title('Vertically flipped image')
         plt.show()
     
     def test_blur(self):
@@ -152,6 +155,7 @@ class Tests_on_Augmentations(unittest.TestCase):
         plt.imshow(self.image, vmin = 0, vmax = 255)
         plt.subplot(1,2,2)
         plt.imshow(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
+        plt.title('blurred image')
         plt.show()
 
     def test_pole_flip(self):
