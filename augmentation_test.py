@@ -7,10 +7,9 @@ Important details on the project:
 1. The model takes in a fixed size image and outputs a vector representation of the image
 2. The model uses the vector representation to return similar images
 
-Plan for Mar 9:
-1. Add polarity flip
-2. Perform a combination of augmentations depicted by a target dictionary
-3. Work on the documentation of the code
+Plan for Mar 10:
+1. Perform a combination of augmentations depicted by a target dictionary
+2. Work on the documentation of the code
 '''
 
 import os
@@ -92,14 +91,14 @@ class Tests_on_Augmentations(unittest.TestCase):
         FILE_NAME = 'tile_20230206_000000_1024_HMIB_0320_0768.p'
         self.image = read_image(DATA_DIR + FILE_NAME)
         self.superimage = stitch_adj_imgs(DATA_DIR, FILE_NAME)
-        augment_list = {"brightness": 1, "translate": (0,0), "zoom": 1, "rotate": 45, "h_flip": True, "v_flip": True, 'blur':(2,2)}
+        augment_list = {"brightness": 1, "translate": (0,0), "zoom": 1, "rotate": 45, "h_flip": True, "v_flip": True, 'blur':(2,2), 'p_flip': True}
         self.augmentations = Augmentations(self.superimage, augment_list)
         self.assertEqual(True,True)
 
     def test_rotate(self):
         # 2/23/23 - We want to try 45 degrees and see what it does to the edges
         # for 2/24 meeting
-        image_ro = self.augmentations.rotate_image()    
+        image_ro = self.augmentations.rotate_image(self.superimage, rotation := 45)    
         # plt.subplot(1,2,1)
         # plt.imshow(self.image, vmin = 0, vmax = 255)
         # plt.subplot(1,2,2)
@@ -108,20 +107,21 @@ class Tests_on_Augmentations(unittest.TestCase):
         plt.imshow(self.superimage[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
         plt.subplot(1,2,2)
         plt.imshow(image_ro[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
-        plt.title('rotated image (45 deg)')
+        plt.title(f'rotated image {rotation} deg')
         plt.show()
 
     def test_dim(self):
         self.assertEqual(len(self.image.shape), 2)
 
     def test_resolution(self):
-        image_tr = self.augmentations.translate_image()
+        image_tr = self.augmentations.translate_image(self.image)
         self.assertEqual(self.image.shape, (64, 64))
-        self.assertEqual(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]].shape, (64, 64))
+        self.assertEqual(image_tr.shape, (64, 64))
+        # self.assertEqual(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]].shape, (64, 64))
 
     def test_range(self):
-        image = self.augmentations.brighten_image()
-        self.assertNotEqual(np.max(image), np.min(image))
+        image = self.augmentations.brighten_image(self.image)
+        self.assertNotEqual(np.max(image), np.min(self.image))
     
     def test_tile_start(self):
         self.assertEqual(int(FILE_NAME[l:l+4]),320)
@@ -135,33 +135,63 @@ class Tests_on_Augmentations(unittest.TestCase):
         # plt.show()
             
     def test_flip(self):
-        image_tr = self.augmentations.v_flip_image()
+        image_tr = self.augmentations.v_flip_image(self.image)
         # ensuring same size
-        self.assertEqual(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]].shape, self.image.shape)
+        self.assertEqual(image_tr.shape, (64, 64))
+        # self.assertEqual(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]].shape, self.image.shape)
 
-        plt.subplot(1,2,1)
-        plt.imshow(self.image, vmin = 0, vmax = 255)
-        plt.subplot(1,2,2)
-        plt.imshow(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
-        plt.title('Vertically flipped image')
-        plt.show()
+        # plt.subplot(1,2,1)
+        # plt.imshow(self.image, vmin = 0, vmax = 255)
+        # plt.subplot(1,2,2)
+        # plt.imshow(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
+        # plt.title('Vertically flipped image')
+        # plt.show()
     
     def test_blur(self):
-        image_tr = self.augmentations.blur_image()
+        image_tr = self.augmentations.blur_image(self.image)
         # ensuring same size
-        self.assertEqual(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]].shape, self.image.shape)
+        self.assertEqual(image_tr.shape, (64, 64))
+        # self.assertEqual(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]].shape, self.image.shape)
 
-        plt.subplot(1,2,1)
-        plt.imshow(self.image, vmin = 0, vmax = 255)
-        plt.subplot(1,2,2)
-        plt.imshow(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
-        plt.title('blurred image')
-        plt.show()
+        # plt.subplot(1,2,1)
+        # plt.imshow(self.image, vmin = 0, vmax = 255)
+        # plt.subplot(1,2,2)
+        # plt.imshow(image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]], vmin = 0, vmax = 255)
+        # plt.title('blurred image')
+        # plt.show()
 
     def test_pole_flip(self):
         # flip and ensure different image
-        image_tr = self.augmentations.pole_flip_image()
-        self.assertTrue(self.image.all() == self.image.all())
+        image_tr = self.augmentations.pole_flip_image(self.image)
+        # self.assertTrue(self.image.all() == self.image.all())
+        # image_tr = image_tr[self.image.shape[0]:2*self.image.shape[0],self.image.shape[0]:2*self.image.shape[0]]
+        plt.subplot(1,3,1)
+        plt.imshow(self.image, vmin = 0, vmax = 255, cmap = "gray")
+        plt.subplot(1,3,2)
+        plt.imshow(image_tr, vmin = 0, vmax = 255, cmap = "gray")
+        plt.title('Polarity flipped image')
+        plt.subplot(1,3,3)
+        plt.plot(image_tr[30,:],label='transformed image')
+        plt.plot(self.image[30,:],label='original image')
+        plt.plot([0,63],[128,128],'-k')
+        plt.legend(frameon=False)
+        plt.show()
+
+    def test_zoom(self):
+        image_tr = self.augmentations.resize(self.image, zoom = 1)
+        s = image_tr.shape
+        s1 = self.image.shape
+        y1 = s[0]//2 - s1[0]//2
+        y2 = s[0]//2 + s1[0]//2
+        x1 = s[1]//2 - s1[1]//2
+        x2 = s[1]//2 + s1[1]//2
+        image_tr = image_tr[y1:y2, x1:x2]
+        plt.subplot(1,2,1)
+        plt.imshow(self.image, vmin = 0, vmax = 255)
+        plt.subplot(1,2,2)
+        plt.imshow(image_tr, vmin = 0, vmax = 255)
+        plt.title('zoomed image')
+        plt.show()
 
 if __name__=='__main__':
     unittest.main()
