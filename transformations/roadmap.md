@@ -81,3 +81,4 @@
 - [ ] Save tiles into an output directory
   - Check if directory exists...
 
+- Formatting: tile_YYYYMMDD_HHMMSS_RESOLUTION_INSTRUMENT_StartROW_StartCOLUMN.p' (pickle)
