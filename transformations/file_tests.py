@@ -29,27 +29,47 @@ class Test_File_Methods(unittest.TestCase):
 
 
     def test_isJpg(self):
-        
+        """Tests if a file name ends in .jpgen
+        Args: None
+        Returns: None
+        """
         tempfile = self.input_file.name.lower()
         self.assertRegex(tempfile, "\.*jpg|\.*jpeg")
 
     def test_fileExists(self):
+        """Tests is the File exists
+        Args: None
+        Returns: None
+        """        
         with open(self.input_file2.name):
             self.assertIsNotNone(self.input_file2.name)
 
     def test_fileisNamed(self):
+        """Tests if the file has a valid name
+        Args: None
+        Returns: None
+        """
         self.assertIsInstance(self.input_file.name, str)
         
     def test_pathExists(self):
-        #self.assertIsInstance(os.path.exists(self.input_file.f_path), str)
-         self.assertTrue(os.path.exists(os.path.join(self.input_file.f_path, "transformations")))
+        """Tests if the project (transformations) folder exists
+        Args: None
+        Returns: None
+        """        
+
+        file_path = os.path.join(self.input_file.f_path, "transformations")
+        self.assertTrue(os.path.exists(file_path))
 
     def test_same_image(self):
+        """.
+        """        
         #self.assertEqual()
         pass
 
 
     def tearDown(self):
+        """_summary_
+        """        
         self.dummy = "dummy"
         
         

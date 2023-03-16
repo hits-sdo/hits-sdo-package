@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 @dataclass
-class InputFileItem:
-    """This will keep track of a file"""
+class InputFileItem:  
+    """This will keep track of a input file"""
     name: str
     image_type: str
     is_valid: bool
