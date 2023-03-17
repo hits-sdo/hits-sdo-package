@@ -47,10 +47,13 @@ class Augmentations():
        #                        "blur": self.blur_image, "p_flip": self.pole_flip_image}
         # augmentation_name
         # augmentationPointer[augmentation_name](image, augmentations[augmentation_name])
-        method_names = [attribute for attribute in dir(self) if callable(getattr(self, attribute)) and attribute.startswith('__') is False]
+        self.method_names = [attribute for attribute in dir(self) if callable(getattr(self, attribute)) and attribute.startswith('__') is False]
+
+        self.method_names.remove('perform_augmentations')
+
         self.augmentationPointer = {}
 
-        for name in method_names:
+        for name in self.method_names:
             self.augmentationPointer[name] = getattr(self, name)
 
     def rotate(self, image, rotation=0):
@@ -81,12 +84,12 @@ class Augmentations():
         
     def v_flip(self, image, v_flip=True):
         if v_flip == True:
-            image = cv.flip(image, 1) 
+            image = cv.flip(image, 0) 
         return image
     
     def h_flip(self, image, h_flip=True):
         if h_flip == True:
-            image = cv.flip(image, 0) 
+            image = cv.flip(image, 1) 
         return image
     
     def blur(self, image, blur=(1,1)):
@@ -124,6 +127,7 @@ class Augmentations():
     
         return augment_image,title
         
+    
  
 
 ### json file with a list of aug: object like structure -> image, : List of aougment preformed, and their description
