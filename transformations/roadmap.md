@@ -50,7 +50,7 @@
   - [ ] standardize pixel dimensions
     - scale pixels
   - [ ] getFrequencies
-  
+**********************  
 - [ ] Tiling Class
   - [ ] tf.images.extract_patches to divide into patches
     - [ ] Should we use the patchify library?
@@ -60,7 +60,8 @@
     - [ ] tile dimensions
     - [ ] strides
     - [ ] etc...
-      
+  Member Functions 
+    - [ ] Retrieve file width/height, desired tile width/height -> check if divides evenly else calc padding
 
 - [ ] Define Dataloader
 
