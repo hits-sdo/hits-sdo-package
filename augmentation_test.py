@@ -21,6 +21,7 @@ import cv2 as cv
 import glob
 from augmentation_list import AugmentationList
 from augmentation import Augmentations
+
 """glob.glob('/home/geeks/Desktop/gfg/data.txt')"""
 
 # DATA_DIR = '/home/schatterjee/Documents/projects/HITS/data/mag/tiles/'
@@ -29,7 +30,7 @@ from augmentation import Augmentations
 # FILE_NAME = FILE_LIST[0][-42:]
 # l = len("tile_20230206_000634_1024_0171_")
 
-DATA_DIR = './data/mag/tiles/'
+DATA_DIR = './data/euv/tiles/'
 FILE_NAME = 'tile_20230206_000000_1024_HMIB_0320_0768.p'
 l = len("tile_20230206_000634_1024_0171_")
 
@@ -37,7 +38,8 @@ EXISTING_FILES = []
 
 for root, dir, files in os.walk(DATA_DIR):
     for file in files:
-        EXISTING_FILES.append(file)
+        if file.endswith(".p"):
+            EXISTING_FILES.append(file)
 
 
 
@@ -90,8 +92,10 @@ def stitch_adj_imgs(data_dir, file_name):
 
 class Tests_on_Augmentations(unittest.TestCase):
     def setUp(self):
-        DATA_DIR = './data/mag/tiles/'
-        FILE_NAME = 'tile_20230206_000000_1024_HMIB_0320_0768.p'
+        
+        DATA_DIR = f'./data/euv/tiles/'
+        #FILE_NAME = 'tile_20230206_000000_1024_HMIB_0320_0768.p'
+        FILE_NAME = EXISTING_FILES[100]
         self.image = read_image(DATA_DIR + FILE_NAME)
         self.superimage = stitch_adj_imgs(DATA_DIR, FILE_NAME)
         # augment_list = {"brighten": 1.2, "translate": (10,-15), "zoom": 1.5, "rotate": 45, "h_flip": True, "v_flip": True, 'blur':(2,2), 'p_flip': True}

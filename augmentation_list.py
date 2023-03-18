@@ -1,17 +1,22 @@
 from augmentation import Augmentations
 import json
 import random
+from typing import Any
 
 class AugmentationList():
     '''
-    user sends json obj to server, reads through json obj in AugmentationList class. 
-    AugmentationList class asks Augmentation class 
-
-    Vary the augmentations available depending on the instrument
-    euv: no p flip
-    mag: no brighten
+    Class for generating random AugmentationList dictionaries
     '''
-    def __init__(self, instrument):
+    
+    def __init__(self, instrument: str):
+        '''
+        Initialize an object of the AugmentationList class
+        Parameters:
+            instrument (str):
+                type of instrument used, either euv or magnetograms        
+        Returns:
+            None
+        '''
         self.augmentations = Augmentations()
         self.keys = self.augmentations.method_names
         
@@ -28,19 +33,19 @@ class AugmentationList():
             
         
     def randomize(self):
-        print(self.keys) #print all the keys
-        #random.shuffle(self.keys)
-        
+        '''
+        Randomize a dictionary based on the number, order, and amount of augmentations
+        Parameters:
+            None
+        Returns:
+            dict(str, Any):
+                randomized dictionary
+        '''
         num = random.randint(1,len(self.keys))
-        print(num)
         augs = random.sample(self.keys, num)
-
         dic = {}
-        
-        print(augs)
         for key in augs:
             if(key == 'brighten'):
-                #random.uniform(low=0.0, high=1.0, size=None)
                 dic[key] = random.uniform(self.brighten_range[0], self.brighten_range[1])
             if(key == 'zoom'):
                 dic[key] = random.uniform(self.zoom_range[0], self.zoom_range[1])
@@ -58,20 +63,10 @@ class AugmentationList():
                 dic[key] = True
             if(key == 'v_flip'):
                 dic[key] = True
-
-        print(dic)
-            # get a random bool:
-            # bool(random.getrandbits(1))
-            
-        
         return dic
         
-    # def getRandomParam(self, key):
-    #     pass
         
         
 
 if __name__=='__main__':
     A = AugmentationList(instrument="mag")
-    # dic = A.randomize()
-    # print(dic.keys())
