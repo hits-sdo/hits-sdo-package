@@ -4,8 +4,11 @@ import os
 from pyprojroot import here
 import sys
 
-root = here(".here")   # naked party
-sys.path.append(str(root))
+root = here()
+# root = here(".here")   
+# sys.path.append(str(root))
+# path = sys.path[-1][:-5] # variable that gets the last element in the sys.path list and makes
+# it a general path by cutting of the last 5 characters
 JPG_FILE = 'blahg.jpg'      
 TXT_FILE = 'dummy.txt'
 
@@ -22,10 +25,11 @@ class Test_File_Methods(unittest.TestCase):
 
         """
         self.input_file = input_file_info.InputFileItem(name=JPG_FILE, image_type="jpg",
-        is_valid = True, time_stamp="blah", f_path="./here", is_remote=True)
+        is_valid = True, time_stamp="blah", f_path=str(root), is_remote=True)
+
 
         self.input_file2 = input_file_info.InputFileItem(name=TXT_FILE, image_type="txt",
-        is_valid = True, time_stamp="blah", f_path="./here", is_remote=True)
+        is_valid = True, time_stamp="blah", f_path=str(root), is_remote=True)
 
 
     def test_isJpg(self):
@@ -58,6 +62,7 @@ class Test_File_Methods(unittest.TestCase):
         """        
 
         file_path = os.path.join(self.input_file.f_path, "transformations")
+        print("File path is : ", file_path)
         self.assertTrue(os.path.exists(file_path))
 
     def test_same_image(self):
