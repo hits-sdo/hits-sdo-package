@@ -20,6 +20,14 @@ class TileItem:
     parent_file_file_type: str
     parent_file_source: str
 
-
-
+    def calc_padding_width(self) -> tuple:
+        """If the tile doesn't divide evenly into the parent width, then calculates excess padding"""
+        leftover_padding = ((self.parent_img_width % self.tile_pixel_width) + self.tile_pixel_width) % self.tile_pixel_width
+        # returns 1
+        # we want 2 to be returned
+        
+        left_padding = leftover_padding / 2
+        right_padding = leftover_padding - left_padding
+        padding = (left_padding, right_padding)
+        return padding
 
