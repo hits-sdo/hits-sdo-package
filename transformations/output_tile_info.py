@@ -22,11 +22,36 @@ class TileItem:
 
     def calc_padding_width(self) -> tuple:
         """If the tile doesn't divide evenly into the parent width, then calculates excess padding"""
-        leftover_padding = ((self.parent_img_width % self.tile_pixel_width) + self.tile_pixel_width) % self.tile_pixel_width
+        
+        leftover_padding = self.parent_img_width % self.tile_pixel_width
+        if leftover_padding == 0:
+            return (0, 0)
+        else:
+            leftover_padding = self.tile_pixel_width - leftover_padding
         # returns 1
         # we want 2 to be returned
         
-        left_padding = leftover_padding / 2
+        """"""""""""""""
+        3 (tile width) 
+
+        need parent image to be divisible by 3.
+
+        parent image has width of 25
+
+            Two choices, 
+
+                25 - 1 = 24 which is divisible by 3
+
+                25 + 2 = 27 which is divisible by 3
+
+                We need the second choice, but python returns the first one by default. 
+                subtracting -1 is bad because it kills a pixel of our parent image.
+                
+                We would rather add extra pixels than removing pixels, as removing pixels
+                might cause us to lose data.
+        """
+
+        left_padding = leftover_padding // 2
         right_padding = leftover_padding - left_padding
         padding = (left_padding, right_padding)
         return padding

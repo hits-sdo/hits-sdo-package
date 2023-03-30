@@ -15,7 +15,7 @@ class Test_Tile_Items(unittest.TestCase):
             tile_pixel_width=3,
             tile_pixel_height=2,
             is_padded=False,
-            parent_img_width=25,
+            parent_img_width=27,
             parent_img_height=4,
             parent_file_isValid=True,
             parent_file_file_type="blah",
@@ -37,9 +37,16 @@ class Test_Tile_Items(unittest.TestCase):
         """check to see if tile dimensions are less than parents dimensions"""
         self.assertTrue(self.tile_item.tile_pixel_height < self.tile_item.parent_img_height)
 
-    def test_return_value_from_CPW(self):
-        self.assertEqual((1,1), self.tile_item.calc_padding_width())
-        print(self.test_tile_smaller_than_parent_width)
+    def test_correct_padding_width(self):
+        """function to test member function of TileItem which calculates padding width 
+        to add null pixels to both columns ensuring the sun is centered."""
+        print("\n\n\n", self.test_tile_smaller_than_parent_width, "\n\n\n")
+        (test_left_padding, test_right_padding) = self.tile_item.calc_padding_width()
+        temp = (self.tile_item.parent_img_width + test_left_padding + test_right_padding) % self.tile_item.tile_pixel_width
+        self.assertEqual(0, temp)
+
+    # ^^^ Let's do this with height on Friday :)
+        
 
 if __name__ == "__main__":
     unittest.main()
