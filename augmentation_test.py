@@ -19,6 +19,8 @@ import pickle
 import matplotlib.pyplot as plt
 import cv2 as cv
 import glob
+import streamlit as st
+from PIL import Image
 from augmentation_list import AugmentationList
 from augmentation import Augmentations
 
@@ -43,12 +45,19 @@ for root, dir, files in os.walk(DATA_DIR):
 
 
 
-def read_image(image_loc):
+def read_image(image_loc, image_format):
     # := : assign and return the variable
-    image = pickle.load(imfile := open(image_loc, 'rb'))
-    imfile.close()
-    image = image.astype(float)/255
-    return image
+    
+    if(image_format == 'p'):
+        image = pickle.load(imfile := open(image_loc, 'rb'))
+        imfile.close()
+        image = image.astype(float)/255
+        return image
+    if(image_format == 'jpg' or image_format == 'png' or image_format == 'jpeg'):
+        im = Image.open(image_loc)
+        image = np.array(im).astype(float)/255
+        return image
+
 
     #dim = (width, height)
     #resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
