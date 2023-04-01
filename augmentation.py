@@ -88,7 +88,20 @@ class Augmentations():
 
     def zoom(self, image, zoom : float=1):
         s = image.shape
-        return cv.resize(image, (int(zoom*s[0]), int(zoom*s[1])), interpolation = cv.INTER_AREA) # Resize the image using zoom as scaling factor with area interpolation
+        s1 = (int(zoom*s[0]), int(zoom*s[1]))
+        img = np.zeros((s[0], s[1]))
+        image = cv.resize(image, (s1[1],s1[0]), interpolation = cv.INTER_AREA)
+        # Resize the image using zoom as scaling factor with area interpolation
+        if zoom < 1:
+            y1 = s[0]//2 - s1[0]//2
+            y2 = s[0]//2 + s1[0] - s1[0]//2
+            x1 = s[1]//2 - s1[1]//2
+            x2 = s[1]//2 + s1[1] - s1[1]//2
+            img[y1:y2, x1:x2] = image
+            return img
+        else:
+            return image
+      
         
     def v_flip(self, image):
         image = cv.flip(image, 0)  # vertically flip the image
