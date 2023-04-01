@@ -70,3 +70,4 @@ class AugmentationList():
 
 if __name__=='__main__':
     A = AugmentationList(instrument="mag")
+    print(A.randomize())
