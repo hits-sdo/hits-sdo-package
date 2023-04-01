@@ -44,7 +44,7 @@ for root, dir, files in os.walk(DATA_DIR):
             EXISTING_FILES.append(file)
 
 
-
+#image_loc = filepath
 def read_image(image_loc, image_format):
     # := : assign and return the variable
     
@@ -56,7 +56,7 @@ def read_image(image_loc, image_format):
     if(image_format == 'jpg' or image_format == 'png' or image_format == 'jpeg'):
         im = Image.open(image_loc)
         image = np.array(im).astype(float)/255
-        return image
+        return image[:,:,0]
 
 
     #dim = (width, height)
@@ -70,6 +70,7 @@ def stitch_adj_imgs(data_dir, file_name):
 
     iStart = int(file_name[-11:-7])
     jStart = int(file_name[-6:-2])
+    # coordinates of surrounding tiles
     coordinates = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
     
     image_len = read_image(data_dir + file_name).shape[0]
