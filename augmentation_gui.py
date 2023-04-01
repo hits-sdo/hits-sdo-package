@@ -35,6 +35,11 @@ Plan for today Mar 30, 2023:
 - [] sidebar placeholder
 - [] perform random augmentations
 
+Plan for Mar 31st 2023:
+- [] Get rid of dark img problem
+- [] Add download button to download augmented image & augmentation sequence
+- [] 
+
 '''
 
 # https://docs.streamlit.io/library/api-reference/widgets/st.multiselect
@@ -52,17 +57,22 @@ from augmentation import Augmentations
 import streamlit as st
 from PIL import Image
 from augmentation_test import read_image
+from io import BytesIO
 import tempfile
-
+'''''''''
+3/31 - Left off: downloading pickle file just fine, rendering is an issue (normalization?)
+'''''''''
 
 def button_augmentation_randomize(img):
-    augument_list = AugmentationList(instrument = 'euv')
-    augment_list = augument_list.randomize()
-
-    augments = Augmentations(img, augment_list)
+    augment_list = AugmentationList(instrument = 'euv')
+    augment_dict = augment_list.randomize()
+    augments = Augmentations(img, augment_dict)
     augmented_img, title = augments.perform_augmentations()
     col2.header(title)
     col2.image(augmented_img,use_column_width='always',clamp=True)
+    #a_img = pickle.dumps(augmented_img,open('augmented_img.p','wb'))
+    a_img = pickle.dumps(augmented_img)
+    col2.download_button(label="Download Augmented Image", data=a_img, file_name="augmented_img.p", mime="image/p")
 
 
 st.header("Image Augmentation Tool")
@@ -86,6 +96,35 @@ if uploaded_file is not None:
 
 #img = read_image(uploaded_file)
 
+
+    # pickle.dumps -> translates img to a bytestream
+
+    # https://pythontic.com/modules/pickle/dumps
+
+    # Problem:
+    #   - Right now its 'uploaded_file', we want to download the 'augmented_image'
+    #   - Need to download pickle file as well
+    # # Convert the NumPy array to a Pillow Image object
+    #img = Image.fromarray(augmented_img)
+    # img = Image.fromarray(np.uint8(cm.gist_earth(augmented_img)*255)) (?) - Jasper
+    # ^ do we need to colormap this? -Sierra --> I don't know :DD found it online - Jasper
+    # That's what cm is doing. let's see! - SM
+    # st.download_button(label='Download Image',
+    #                     data= open('yourimage.png', 'rb').read(),
+    #                     file_name='imagename.png',
+    #                     mime='image/png')
+#     from io import BytesIO
+# buf = BytesIO()
+# img.save(buf, format="JPEG")
+# byte_im = buf.getvalue()
+# Now you can use the st.download_button
+#  
+# btn = col.download_button(
+#       label="Download Image",
+#       data=byte_im,
+#       file_name="imagename.png",
+#       mime="image/jpeg",
+#       )
 
 
 
