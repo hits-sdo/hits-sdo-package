@@ -21,6 +21,9 @@ class Test_Tile_Items(unittest.TestCase):
             parent_file_file_type="blah",
             parent_file_source="blah")
 
+        
+        
+
     def test_tile_division_width(self):
         """This test will check if the tiles width evenly divides into the parent image(s) width"""
         self.assertTrue(self.tile_item.parent_img_width % self.tile_item.tile_pixel_width == 0)
@@ -44,8 +47,28 @@ class Test_Tile_Items(unittest.TestCase):
         (test_left_padding, test_right_padding) = self.tile_item.calc_padding_width()
         temp = (self.tile_item.parent_img_width + test_left_padding + test_right_padding) % self.tile_item.tile_pixel_width
         self.assertEqual(0, temp)
+        
 
-    # ^^^ Let's do this with height on Friday :)
+    def test_correct_padding_height(self):
+        """function to test member function of TileItem which calculates padding height 
+        to add null pixels to both columns ensuring the sun is centered."""
+        
+        
+        print("\n\n\n", self.test_tile_smaller_than_parent_height, "\n\n\n")
+        (test_top_padding, test_bottom_padding) = self.tile_item.calc_padding_height()
+        temp = (self.tile_item.parent_img_height + test_top_padding + test_bottom_padding) % self.tile_item.tile_pixel_height
+        self.assertEqual(0, temp)
+        
+        self.tile_item.tile_pixel_height = 5
+        self.tile_item.parent_img_height = 45
+        self.assertEqual(self.tile_item.calc_padding_height(), (0,0))
+        
+    def test_correct_padding(self): # tests height and width
+        self.tile_item.parent_img_height = 42 
+        self.tile_item.parent_img_width = 40
+        self.tile_item.tile_pixel_height = 5
+        self.tile_item.tile_pixel_width = 7
+        self.assertEqual(self.tile_item.calc_padding_height(), (0,0))
         
 
 if __name__ == "__main__":

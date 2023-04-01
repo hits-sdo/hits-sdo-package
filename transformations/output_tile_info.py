@@ -56,3 +56,31 @@ class TileItem:
         padding = (left_padding, right_padding)
         return padding
 
+    def calc_padding_height(self) -> tuple:
+        """If the tile doesn't divide evenly into the parent height, then calculates excess padding"""
+        
+        leftover_padding = self.parent_img_height % self.tile_pixel_height
+        if leftover_padding == 0:
+            return (0, 0)
+        else:
+            leftover_padding = self.tile_pixel_height - leftover_padding
+       
+        top_padding = leftover_padding // 2
+        bottom_padding = leftover_padding - top_padding
+        padding = (top_padding, bottom_padding)
+        return padding
+    
+    def calc_overall_padding(self):
+        raise NotImplementedError
+
+        # team yellow - parent: 1024 x 1024 
+        # - tiles: 64 x 64
+
+        # team red - We don't actually need to save the tiles as long as we have the (width x height)
+        # and (starting row x starting column)
+
+        #=======Intention for Fri 3/31/23=======
+        # using the amount of padding we need (now global variables) to calculate
+        # the number of pixels we need to add for padding
+        # also add in the width and height padding methods a statement to redefine
+        # the value of the padding variables
