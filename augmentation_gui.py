@@ -107,7 +107,7 @@ def main():
             col1.header("Original Image")
             col1.image(img,use_column_width='always',clamp=True)
             aug_dict = None
-            if uploaded_dict and submitted is not None:
+            if uploaded_dict is not None:
                 aug_dict = json.load(uploaded_dict)
         
         col1.button("Apply random augmentation", on_click=button_augmentation_randomize,args=([img, col2, aug_dict]))
