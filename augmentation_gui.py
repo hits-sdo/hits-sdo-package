@@ -40,11 +40,22 @@ Plan for Mar 31st 2023:
 - [] Add download button to download augmented image & augmentation sequence
 - [] 
 
+Plan for Apr 6th 2023:
+- [] Get rid of dark image rendering bug
+- [] Downloading a JSON file from our program to local computer of image augmentation state
+- [] Upload a JSON file and perform the augmentation defined in that
+
+Plan for Apr 7th 2023:
+- [] Sidebar to randomize augmentation
+- [] Make randomizer outcome editable for user-defined dictionary 
+- [] Add image info in the dictionary
 '''
 
 # https://docs.streamlit.io/library/api-reference/widgets/st.multiselect
 # https://docs.streamlit.io/library/api-reference/widgets/st.file_uploader
 # > suggested syntax: uploaded_file = st.file_uploader("Choose an image...", type="jpg")
+
+
 
 import os
 import numpy as np
@@ -59,72 +70,57 @@ from PIL import Image
 from augmentation_test import read_image
 from io import BytesIO
 import tempfile
-'''''''''
-3/31 - Left off: downloading pickle file just fine, rendering is an issue (normalization?)
-'''''''''
+import json
 
-def button_augmentation_randomize(img):
+def button_augmentation_randomize(img, col2, aug_dict = None):
+    # Place JSON into augment_dict
     augment_list = AugmentationList(instrument = 'euv')
-    augment_dict = augment_list.randomize()
+    if aug_dict is None:
+        augment_dict = augment_list.randomize()
+    else:
+        augment_dict = aug_dict
     augments = Augmentations(img, augment_dict)
     augmented_img, title = augments.perform_augmentations()
     col2.header(title)
     col2.image(augmented_img,use_column_width='always',clamp=True)
-    #a_img = pickle.dumps(augmented_img,open('augmented_img.p','wb'))
-    a_img = pickle.dumps(augmented_img)
+    js = json.dumps(augment_dict)   # Convert transformation dictionary to JSON string
+    augmented_img *= 255  # un-normalize image
+    a_img = pickle.dumps(augmented_img) # serialize into bytestring
     col2.download_button(label="Download Augmented Image", data=a_img, file_name="augmented_img.p", mime="image/p")
+    col2.download_button(label="Download Augmentation Dictionary", data=js, file_name="augmented_dict.json", mime="application/json")
+    #st.write(st.session_state['dict'])
 
 
-st.header("Image Augmentation Tool")
-uploaded_file = st.file_uploader("Choose an image...", type=["p", "jpg"])
-
-if uploaded_file is not None:
+def main():
+    st.header("Image Augmentation Tool")
+    uploaded_file = st.file_uploader("Choose an image...", type=["p", "jpg"],key='img')
+    uploaded_dict = st.file_uploader("Choose a dictionary", type=["json"])
     col1, col2 = st.columns([1,1])
-    # img = read_image(uploaded_file)
-#     because uploaded_file object doesn't have a path name attribute:
-    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-        # write to temp file
-        temp_file.write(uploaded_file.read())
-        #get path
-        file_path = temp_file.name
-        img = read_image(file_path, uploaded_file.name.split('.')[-1])
-        col1.header("Original Image")
-        col1.image(img,use_column_width='always',clamp=True)
+    if uploaded_file is not None:
+        
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            # write to temp file
+            temp_file.write(uploaded_file.read())
+            #get path
+            file_path = temp_file.name
+            img = read_image(file_path, uploaded_file.name.split('.')[-1])
+            col1.header("Original Image")
+            col1.image(img,use_column_width='always',clamp=True)
+            aug_dict = None
+            if uploaded_dict and submitted is not None:
+                aug_dict = json.load(uploaded_dict)
+        
+        col1.button("Apply random augmentation", on_click=button_augmentation_randomize,args=([img, col2, aug_dict]))
+        
 
-        st.button("Apply random augmentation", on_click=button_augmentation_randomize,args=([img]))
+
+                
+      
 
 
-#img = read_image(uploaded_file)
+if __name__ == '__main__':
+    main()
 
-
-    # pickle.dumps -> translates img to a bytestream
-
-    # https://pythontic.com/modules/pickle/dumps
-
-    # Problem:
-    #   - Right now its 'uploaded_file', we want to download the 'augmented_image'
-    #   - Need to download pickle file as well
-    # # Convert the NumPy array to a Pillow Image object
-    #img = Image.fromarray(augmented_img)
-    # img = Image.fromarray(np.uint8(cm.gist_earth(augmented_img)*255)) (?) - Jasper
-    # ^ do we need to colormap this? -Sierra --> I don't know :DD found it online - Jasper
-    # That's what cm is doing. let's see! - SM
-    # st.download_button(label='Download Image',
-    #                     data= open('yourimage.png', 'rb').read(),
-    #                     file_name='imagename.png',
-    #                     mime='image/png')
-#     from io import BytesIO
-# buf = BytesIO()
-# img.save(buf, format="JPEG")
-# byte_im = buf.getvalue()
-# Now you can use the st.download_button
-#  
-# btn = col.download_button(
-#       label="Download Image",
-#       data=byte_im,
-#       file_name="imagename.png",
-#       mime="image/jpeg",
-#       )
 
 
 
