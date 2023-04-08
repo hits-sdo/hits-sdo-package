@@ -73,13 +73,23 @@
   - Check if file exists and in specified directory
 - [] Define how much the file is being read
 
-
-    -
-
-
-
-
-
 - [ ] Save tiles into an output directory
   - Check if directory exists...
 
+- how we're going to use this & if it's going to be a helper function that helps add padding to the parent image
+
+    # team yellow - parent: 1024 x 1024
+    # - tiles: 64 x 64
+
+    # team red - We don't actually need to save the tiles as long as we have the (width x height)
+    # and (starting row x starting column)
+
+    #=======Intention for Fri 3/31/23=======
+    # using the amount of padding we need (now global variables) to calculate
+    # the number of pixels we need to add for padding
+    # also add in the width and height padding methods a statement to redefine
+    # the value of the padding variables
+
+    Continue cleaning up based on Linter feedback, 
+    double check the object that we are creating, 
+    and double check over our classes

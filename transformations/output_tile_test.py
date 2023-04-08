@@ -4,14 +4,17 @@ import pyprojroot
 
 
 class Test_Tile_Items(unittest.TestCase):
+    """
+    Class that tests all the methods in the ParentTransformationsFromTile class
+    """
     def setUp(self) -> None:
         """This class contains the unit tests that the tile object is valid."""
-        self.tile_item = output_tile_info.TileItem( 
-            tile_name="Name", 
-            tile_image_type="jpeg", 
+        self.tile_item = output_tile_info.ParentTransformationsFromTile(
+            tile_name="Name",
+            tile_image_type="jpeg",
             tile_is_valid=False,
-            tile_time_stamp="blah",  
-            tile_f_out_path=pyprojroot.here(),  
+            tile_time_stamp="blah",
+            tile_f_out_path=pyprojroot.here(),
             tile_pixel_width=3,
             tile_pixel_height=2,
             is_padded=False,
