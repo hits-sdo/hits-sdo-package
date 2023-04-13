@@ -20,7 +20,7 @@ class Test_Tile_Items(unittest.TestCase):
             is_padded=False,
             parent_img_width=27,
             parent_img_height=4,
-            parent_file_isValid=True,
+            parent_file_is_valid=True,
             parent_file_file_type="blah",
             parent_file_source="blah")
 

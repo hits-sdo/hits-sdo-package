@@ -16,7 +16,7 @@ class TileItem:
 
     parent_img_width: int
     parent_img_height: int
-    parent_file_isValid: bool
+    parent_file_is_valid: bool
     parent_file_file_type: str
     parent_file_source: str
 
