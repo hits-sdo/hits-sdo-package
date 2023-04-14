@@ -75,7 +75,7 @@ class Augmentations():
         
         
     def brighten(self, image, brighten: float=1):
-        image_out = image**brighten # use brighten parameter as an exponent to brighten/darken image
+        image_out = np.abs(image)**brighten # use brighten parameter as an exponent to brighten/darken image
         return image_out
     
 
