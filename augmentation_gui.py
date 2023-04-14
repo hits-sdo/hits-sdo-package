@@ -50,6 +50,8 @@ Plan for Apr 7th 2023:
 - [] Make randomizer outcome editable for user-defined dictionary 
 - [] Add image info in the dictionary
 - [] flixible target resolution
+
+Left off: changing augments in the widget is finnicky
 '''
 
 # https://docs.streamlit.io/library/api-reference/widgets/st.multiselect
@@ -73,33 +75,39 @@ from io import BytesIO
 import tempfile
 import json
 
-def button_augmentation_randomize(img, col2, aug_dict = None):
+def generate_augmentation(instrument):
+    # del st.sesstion_state['random_init_dict']
     # Place JSON into augment_dict
-    augment_list = AugmentationList(instrument = 'euv')
-    if aug_dict is None:
-        augment_dict = augment_list.randomize()
-    else:
-        augment_dict = aug_dict
-    augments = Augmentations(img, augment_dict)
+    augment_list = AugmentationList(instrument)
+    st.session_state['random_init_dict'] = augment_list.randomize()
+
+    
+def apply_augmentation(img, col2):
+    augments = Augmentations(img, st.session_state["random_init_dict"])
     augmented_img, title = augments.perform_augmentations()
     col2.header(title)
     col2.image(augmented_img,use_column_width='always',clamp=True)
-    js = json.dumps(augment_dict)   # Convert transformation dictionary to JSON string
+    js = json.dumps(st.session_state['random_init_dict'])   # Convert transformation dictionary to JSON string
     augmented_img *= 255  # un-normalize image
     a_img = pickle.dumps(augmented_img) # serialize into bytestring
     col2.download_button(label="Download Augmented Image", data=a_img, file_name="augmented_img.p", mime="image/p")
     col2.download_button(label="Download Augmentation Dictionary", data=js, file_name="augmented_dict.json", mime="application/json")
 
+def refresh():
+    st.experimental_rerun()
 
+    
 def main():
-
-        
-
-
-
+    # uploaded_dict = st.empty()
+    # st.caching.clear_cache()
     st.header("Image Augmentation Tool")
     uploaded_file = st.file_uploader("Choose an image...", type=["p", "jpg"],key='img')
-    uploaded_dict = st.file_uploader("Choose a dictionary", type=["json"])
+    with st.form('my-form', clear_on_submit = True):
+        uploaded_dict = st.file_uploader("Choose a dictionary", type=["json"])
+        submitted = st.form_submit_button("UPLOAD!")
+    
+    # with st.form("my-form", clear_on_submit=True):
+    #    file = st.file_uploader("FILE UPLOADER")
     col1, col2 = st.columns([1,1])
 
     # Setup Sidebar
@@ -108,17 +116,22 @@ def main():
     augment_list = AugmentationList(instrument = imageInst)
     if 'random_init_dict' not in st.session_state:
         st.session_state['random_init_dict'] = augment_list.randomize()
+
     
-    
+    # user_dict = None
+    if uploaded_dict is not None and submitted is True:
+        st.session_state["random_init_dict"] = json.load(uploaded_dict)
+         # uploaded_dict = st.empty() #new 
     #augment_dict = augment_list.randomize()
 
-    options = st.sidebar.multiselect("Choose augmentations: ", augment_list.keys, default=list(st.session_state['random_init_dict'].keys()))
+    options = st.sidebar.multiselect("Choose augmentations: ", augment_list.keys, default=list(st.session_state['random_init_dict'].keys()))#,on_change=refresh)
     #st.sidebar.write('You selected: ', options)
     user_dict = {}
     for key in options: 
         #TODO switch to python 3.10 and use match statement 
         if 'rotate' == key:
-            rotation = st.sidebar.slider("Rotation:", -180.0, 180.0, st.session_state['random_init_dict'][key])
+            rotation = st.sidebar.slider("Rotation:", -180.0, 180.0, float(st.session_state['random_init_dict'][key]) if key in st.session_state['random_init_dict'] else 0.0 )
+            
             user_dict['rotate'] = rotation    
         if 'v_flip' == key:
             user_dict['v_flip'] = True
@@ -127,17 +140,20 @@ def main():
         if 'blur' == key :
             user_dict['blur'] = (2,2)
         if 'brighten' == key:
-            brighten = st.sidebar.slider("Brighten:", 0.5, 1.5, st.session_state['random_init_dict'][key])
+            
+            brighten = st.sidebar.slider("Brighten:", 0.5, 1.5, float(st.session_state['random_init_dict'][key]) if key in st.session_state['random_init_dict'] else 1.0 )
             user_dict['brighten'] = brighten
-        if 'zoom' == key:
-            zoom = st.sidebar.slider("Zoom:", 0.5, 5.0, st.session_state['random_init_dict'][key])
-            user_dict['zoom'] = zoom
-        if 'translate' == key:
-            x_translate = st.sidebar.slider("X-Axis Translation:", -10, 10, st.session_state['random_init_dict'][key][0])
-            y_translate = st.sidebar.slider("Y-Axis Translation:", -10, 10, st.session_state['random_init_dict'][key][1])
-            user_dict['translate'] = (x_translate, y_translate) 
-          
 
+        if 'zoom' == key:
+            zoom = st.sidebar.slider("Zoom:", 0.5, 5.0, float(st.session_state['random_init_dict'][key]) if key in st.session_state['random_init_dict'] else 1.0 )
+            user_dict['zoom'] = zoom
+
+        if 'translate' == key:
+            x_translate = st.sidebar.slider("X-Axis Translation:", -10, 10, st.session_state['random_init_dict'][key][0] if key in st.session_state['random_init_dict'] else 0 )
+            y_translate = st.sidebar.slider("Y-Axis Translation:", -10, 10, st.session_state['random_init_dict'][key][1] if key in st.session_state['random_init_dict'] else 0)
+            user_dict['translate'] = (x_translate, y_translate)
+
+    st.session_state['random_init_dict'] = user_dict
     
     
     
@@ -151,13 +167,12 @@ def main():
             img = read_image(file_path, uploaded_file.name.split('.')[-1])
             col1.header("Original Image")
             col1.image(img,use_column_width='always',clamp=True)
-            aug_dict = None
-            if uploaded_dict is not None:
-                aug_dict = json.load(uploaded_dict)
+
                 
-            st.sidebar.button("Random augmentation", on_click=button_augmentation_randomize,args=([img, col2, aug_dict]))
-            st.sidebar.button("Apply augmentation", on_click=button_augmentation_randomize,args=([img, col2, user_dict]))
-            
+            st.sidebar.button("Random augmentation", on_click=generate_augmentation,args=([imageInst]))
+            st.sidebar.button("Apply augmentation", on_click=apply_augmentation,args=([img, col2]))
+    # uploaded_dict = st.empty()
+    # When removing some translations from the randomly generated list -- it keeps them rather than updating the dictionary
 
 
                 
