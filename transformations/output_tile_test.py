@@ -14,9 +14,13 @@ class Test_Tile_Items(unittest.TestCase):
             tile_f_out_path=pyprojroot.here(),  
             tile_pixel_width=3,
             tile_pixel_height=2,
-            is_padded=False,
             parent_img_width=27,
             parent_img_height=4,
+            is_padded=False,
+            tile_left_padding=0
+            tile_right_padding=0
+            tile_top_padding=0
+            tile_bottom_padding=0
             parent_file_isValid=True,
             parent_file_file_type="blah",
             parent_file_source="blah")
@@ -69,6 +73,7 @@ class Test_Tile_Items(unittest.TestCase):
         self.tile_item.tile_pixel_height = 5
         self.tile_item.tile_pixel_width = 7
         self.assertEqual(self.tile_item.calc_padding_height(), (0,0))
+
         
 
 if __name__ == "__main__":
