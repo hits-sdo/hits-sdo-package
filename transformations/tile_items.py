@@ -10,7 +10,7 @@ class TileItem(NamedTuple):
     origin_row: int
     origin_col: int
 
-class SeparateClass:
+class TilerClass:
     """This class divides the parent image into tiles"""
     parent_image: bytearray
     #tile_image: 2D array 
@@ -22,6 +22,7 @@ class SeparateClass:
     
     def grab_tiles():
         ...
+# parent_image = Image.open(image_path)
 
 
 # creating a class

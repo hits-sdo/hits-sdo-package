@@ -15,3 +15,6 @@
     - create a tile object in setUp
         - call getter functions for width and height
     - replace all instances of tile pixel width and height in getter functions
+
+# =====TODO for 4/14/23=====
+1. Design choice One tile class will hold all tiles associated with one parent image
