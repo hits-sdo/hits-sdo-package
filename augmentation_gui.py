@@ -75,15 +75,16 @@ from io import BytesIO
 import tempfile
 import json
 
-def generate_augmentation(instrument):
+def generate_augmentation():
     # del st.sesstion_state['random_init_dict']
     # Place JSON into augment_dict
-    augment_list = AugmentationList(instrument)
+    augment_list = AugmentationList(st.session_state['instrument'])
     st.session_state['random_init_dict'] = augment_list.randomize()
 
     
-def apply_augmentation(img, col2):
-    augments = Augmentations(img, st.session_state["random_init_dict"])
+def apply_augmentation(img, col2, user_dict):
+    st.session_state['random_init_dict'] = user_dict
+    augments = Augmentations(img, st.session_state['random_init_dict'])
     augmented_img, title = augments.perform_augmentations()
     col2.header(title)
     col2.image(augmented_img,use_column_width='always',clamp=True)
@@ -95,7 +96,6 @@ def apply_augmentation(img, col2):
 
 def refresh():
     st.experimental_rerun()
-
     
 def main():
     # uploaded_dict = st.empty()
@@ -112,10 +112,12 @@ def main():
 
     # Setup Sidebar
     st.sidebar.title("Settings") 
-    imageInst = st.sidebar.selectbox("Select Instrument", ('euv', 'mag'))
+    imageInst = st.sidebar.selectbox("Select Instrument", ('euv', 'mag'), key='instrument', on_change=generate_augmentation)
     augment_list = AugmentationList(instrument = imageInst)
     if 'random_init_dict' not in st.session_state:
         st.session_state['random_init_dict'] = augment_list.randomize()
+
+    
 
     
     # user_dict = None
@@ -124,9 +126,11 @@ def main():
          # uploaded_dict = st.empty() #new 
     #augment_dict = augment_list.randomize()
 
+    user_dict = {}
     options = st.sidebar.multiselect("Choose augmentations: ", augment_list.keys, default=list(st.session_state['random_init_dict'].keys()))#,on_change=refresh)
     #st.sidebar.write('You selected: ', options)
-    user_dict = {}
+    
+    
     for key in options: 
         #TODO switch to python 3.10 and use match statement 
         if 'rotate' == key:
@@ -153,8 +157,9 @@ def main():
             y_translate = st.sidebar.slider("Y-Axis Translation:", -10, 10, st.session_state['random_init_dict'][key][1] if key in st.session_state['random_init_dict'] else 0)
             user_dict['translate'] = (x_translate, y_translate)
 
-    st.session_state['random_init_dict'] = user_dict
     
+    # if user_dict != st.session_state['random_init_dict']:
+    #     st.session_state['random_init_dict'] = user_dict
     
     
     if uploaded_file is not None:
@@ -166,11 +171,9 @@ def main():
             file_path = temp_file.name
             img = read_image(file_path, uploaded_file.name.split('.')[-1])
             col1.header("Original Image")
-            col1.image(img,use_column_width='always',clamp=True)
-
-                
-            st.sidebar.button("Random augmentation", on_click=generate_augmentation,args=([imageInst]))
-            st.sidebar.button("Apply augmentation", on_click=apply_augmentation,args=([img, col2]))
+            col1.image(img,use_column_width='always',clamp=True)   
+            st.sidebar.button("Random augmentation", on_click=generate_augmentation)
+            st.sidebar.button("Apply augmentation", on_click=apply_augmentation,args=([img, col2, user_dict]))
     # uploaded_dict = st.empty()
     # When removing some translations from the randomly generated list -- it keeps them rather than updating the dictionary
 
