@@ -16,5 +16,16 @@
         - call getter functions for width and height
     - replace all instances of tile pixel width and height in getter functions
 
-# =====TODO for 4/14/23=====
+# =====TODO for 4/19/23=====
 1. Design choice One tile class will hold all tiles associated with one parent image
+2. Test cases for TilerClass member functions
+3. (lower priority) If time, GitHub actions yaml written to run all test     cases we've already written upon push/pull request
+4. Ask Andres if there is a Earth observation data that we can use to select a ROI
+
+# =====TODO for 4/21/23=====
+1. Ask team red and yellow about JSON file
+2. Ask Andres if there is a Earth observation data that we can use to select a ROI
+3. Continue cut_up_tiles function in tile_items.py
+4. Do reconstruct_tile_parent function in tile_items.py
+5. Do export_tiles_local function in tile_items.py
+6. Write unit tests for tile_items module under test_tile_items.py (ex: visualizing the tiles reconstructed vs original parent)
