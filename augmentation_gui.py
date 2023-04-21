@@ -51,6 +51,15 @@ Plan for Apr 7th 2023:
 - [] Add image info in the dictionary
 - [] flixible target resolution
 
+Plan for April 20th 2023:
+- [] User defined target resolution (default: 64x64)
+- [] Allow user to specify target crop location (default: center)
+    - Crops the input image to the specified region
+    - Selecting a region by dragging a box
+    - Be able to use superimage when cropping
+- [] Allow user to work with RGB colors  
+- [] Work with Pylint?
+
 Left off: changing augments in the widget is finnicky
 '''
 
@@ -74,6 +83,8 @@ from augmentation_test import read_image
 from io import BytesIO
 import tempfile
 import json
+from streamlit_cropper import st_cropper
+from streamlit_modal import Modal
 
 def generate_augmentation():
     # del st.sesstion_state['random_init_dict']
@@ -81,7 +92,6 @@ def generate_augmentation():
     augment_list = AugmentationList(st.session_state['instrument'])
     st.session_state['random_init_dict'] = augment_list.randomize()
 
-    
 def apply_augmentation(img, col2, user_dict):
     st.session_state['random_init_dict'] = user_dict
     augments = Augmentations(img, st.session_state['random_init_dict'])
@@ -96,6 +106,7 @@ def apply_augmentation(img, col2, user_dict):
 
 def refresh():
     st.experimental_rerun()
+
     
 def main():
     # uploaded_dict = st.empty()
@@ -109,15 +120,18 @@ def main():
     # with st.form("my-form", clear_on_submit=True):
     #    file = st.file_uploader("FILE UPLOADER")
     col1, col2 = st.columns([1,1])
+    cropContainer = col1.empty()
 
     # Setup Sidebar
     st.sidebar.title("Settings") 
+    
+    # Get Instument
     imageInst = st.sidebar.selectbox("Select Instrument", ('euv', 'mag'), key='instrument', on_change=generate_augmentation)
     augment_list = AugmentationList(instrument = imageInst)
     if 'random_init_dict' not in st.session_state:
         st.session_state['random_init_dict'] = augment_list.randomize()
 
-    
+    # Target Resolution
 
     
     # user_dict = None
@@ -158,10 +172,12 @@ def main():
             user_dict['translate'] = (x_translate, y_translate)
 
     
+
+
     # if user_dict != st.session_state['random_init_dict']:
     #     st.session_state['random_init_dict'] = user_dict
     
-    
+    cropper_modal = Modal(key="Crop State", title="Crop Image")
     if uploaded_file is not None:
         
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -174,12 +190,34 @@ def main():
             col1.image(img,use_column_width='always',clamp=True)   
             st.sidebar.button("Random augmentation", on_click=generate_augmentation)
             st.sidebar.button("Apply augmentation", on_click=apply_augmentation,args=([img, col2, user_dict]))
+
+            # col1.button("Crop Image", on_click=function_here, args=([img]))
+
+            pilImg = Image.open(file_path)
+            with col1:
+                cropped_img = st_cropper(pilImg, realtime_update=True, box_color='#0000FF', 
+                                    aspect_ratio=None)
+            st.write("Preview")
+            # resize to original size
+            #_ = cropped_img
+            st.image(cropped_img)
+
+            crop_button_clicked = st.button("Crop Image")
+
+            # if crop_button_clicked:
+            #     cropper_modal.open()
+
+            # if cropper_modal.is_open():
+            #     with cropper_modal.container():
+
     # uploaded_dict = st.empty()
     # When removing some translations from the randomly generated list -- it keeps them rather than updating the dictionary
 
+    # Handle Crop Image View:
+    # if crop_enabled == True:
+    #     ...
+    # Modal definition
 
-                
-      
 
 
 if __name__ == '__main__':
