@@ -60,6 +60,11 @@ Plan for April 20th 2023:
 - [] Allow user to work with RGB colors  
 - [] Work with Pylint?
 
+Plan for April 27th 2023:
+- [] Previous Todos
+- [] Clean up code
+- [] Make "original image" only appear when not in crop mode
+
 Left off: changing augments in the widget is finnicky
 '''
 
@@ -187,38 +192,51 @@ def main():
             file_path = temp_file.name
             img = read_image(file_path, uploaded_file.name.split('.')[-1])
             col1.header("Original Image")
-            col1.image(img,use_column_width='always',clamp=True)   
-            st.sidebar.button("Random augmentation", on_click=generate_augmentation)
-            st.sidebar.button("Apply augmentation", on_click=apply_augmentation,args=([img, col2, user_dict]))
+            #col1.image(img,use_column_width='always',clamp=True)   
 
-            # col1.button("Crop Image", on_click=function_here, args=([img]))
-
-            pilImg = Image.open(file_path)
-            with col1:
-                cropped_img = st_cropper(pilImg, realtime_update=True, box_color='#0000FF', 
-                                    aspect_ratio=None)
-            st.write("Preview")
-            # resize to original size
-            #_ = cropped_img
-            st.image(cropped_img)
-
+            # Prompt User to crop if they clicked the "Crop Image" button
             crop_button_clicked = st.button("Crop Image")
+            if crop_button_clicked or ("crop_button" in st.session_state and st.session_state["crop_button"] == True):
+                st.session_state["crop_button"] = True
+                
+                with col1:
+                    pilImg = Image.fromarray(np.uint8(255*img))#Image.open(file_path)
+                    #_ = pilImg.thumbnail((350, 350)) # Resize image to 350x350
+                    s = 350
+                    pilImg = pilImg.resize((s, s))
+                    
+                    # 
+                    # img_resized = np.array(Image.fromarray(img_array).resize((350, 350)))
 
-            # if crop_button_clicked:
-            #     cropper_modal.open()
+                    #width, _ = pilImg.size
+                    # Todo: Cannot figure out how to get the width of the column. So I used a constant 350
+                    
+                    # Prompt to select bounds using the streamlit cropper library
+                    #st.subheader("Select Bounds:")
+                    cropped_coords = st_cropper(pilImg, realtime_update=True, box_color='#0000FF', 
+                                        aspect_ratio=None, should_resize_image=True, return_type='box')
+                    #st.write(cropped_coords)
+                    
+                    scaling_factor = img.shape[0] / s
+                    left, top, width, height = tuple(map(int, cropped_coords.values()))
+                    # scale all values
+                    left = int(left * scaling_factor)
+                    top = int(top * scaling_factor)
+                    width = int(width * scaling_factor)
+                    height = int(height * scaling_factor)
+                    
+                    cropped_image = img[top:top + height, left:left + width]
+                    # st.session_state['img'] = cropped_image
+                    
+                    # Show Preview
+                    st.subheader("Preview:")
+                    st.image(cropped_image, use_column_width='always') # To extend: use_column_width='always',clamp=True
+                    
+                    # Apply the crop to the image
+                    img = cropped_image
 
-            # if cropper_modal.is_open():
-            #     with cropper_modal.container():
-
-    # uploaded_dict = st.empty()
-    # When removing some translations from the randomly generated list -- it keeps them rather than updating the dictionary
-
-    # Handle Crop Image View:
-    # if crop_enabled == True:
-    #     ...
-    # Modal definition
-
-
+            st.sidebar.button("Random augmentation", on_click=generate_augmentation)
+            st.sidebar.button("Apply augmentation", on_click=apply_augmentation, args=([img, col2, user_dict]))
 
 if __name__ == '__main__':
     main()
