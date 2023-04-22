@@ -1,7 +1,7 @@
 """
 Uses dataclasses to simplify attribute assignment..? read python guide
 """
-
+from PIL import Image
 from dataclasses import dataclass
 
 @dataclass
@@ -18,6 +18,8 @@ class ParentTransformationsFromTile:
     parent_file_is_valid: bool
     parent_file_file_type: str
     parent_file_source: str
+
+
 
     def calc_padding_width(self, tile_pixel_width:int) -> tuple:
         """If the tile doesn't divide evenly into the parent width then calculates excess padding"""
@@ -82,3 +84,36 @@ class ParentTransformationsFromTile:
                               corner_padding[1][1]
 
         return total_padding
+    
+    def generate_file_name_from_parent(self):
+        raise NotImplementedError
+
+
+    def export_padded_parent_meta(self):
+        pass
+
+
+
+
+
+    def export_padded_parent_to_file(self, filepath_output:str, tile_pixel_width:int, tile_pixel_height:int)->bool:
+        
+        try:
+            parent_image = Image.open(self.parent_file_source)
+            new_size = (self.parent_img_width_after_padding, self.parent_img_height_after_padding)
+            padded_parent_image = Image.new("RGB", new_size)
+            box_param = (self.calc_padding_width(tile_pixel_width=tile_pixel_width), self.calc_padding_height(tile_pixel_height=tile_pixel_height))
+            padded_parent_image = Image.paste(parent_image, box=box_param)
+        #   new_name = generate_file_name_from_parent()
+        #   padded_parent_image.save(new_name, format="JPG")
+            padded_parent_image.save("blah.jpg", format="JPG")
+        except:
+            return False
+
+            # FileNotFound exception
+
+
+        return True
+
+
+    

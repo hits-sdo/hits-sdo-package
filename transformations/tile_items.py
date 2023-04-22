@@ -23,7 +23,7 @@ class TilerClass:
     tile_height: int
     tile_list: list[TileItem]
 
-    #tile_image: 2D array 
+    #tile_image: 2D array
     
 
     #tile_group: tuple #user can specify which groupings of tiles they want from parent image
@@ -37,7 +37,6 @@ class TilerClass:
         """
         pass
         # ????
-        # parent_image = Image.open(image_path)
 
     def cut_up_tiles(self):
         """This function takes the parent image from parent_transform_from_tile
@@ -49,6 +48,16 @@ class TilerClass:
 
         num_rows_parent = parent_height // self.tile_height
         num_cols_parent = parent_width // self.tile_width
+
+        img_path = "transformations/user_sample_data/20100905_000036_aia.lev1_euv_12s_4k.jpg"
+        parent_image = Image.open(img_path)
+
+
+        for row in num_rows_parent:
+            for col in num_cols_parent:
+
+
+
 
         # Loop goes here
             # Extract tiles goes here

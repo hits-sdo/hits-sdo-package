@@ -24,12 +24,17 @@ class TestParentTransformationsFromTile(unittest.TestCase):
             parent_img_height_after_padding=0,
             parent_file_is_valid=True,
             parent_file_file_type="blah",
-            parent_file_source="blah")
+            parent_file_source="transformations/user_sample_data/20100905_000036_aia.lev1_euv_12s_4k.jpg"
 
     def test_tile_division_width(self, tile_pixel_width):
         """This test will check if the tile's width evenly divides into the parent image(s) width"""
         self.assertTrue(self.parent_transform.parent_img_width % \
                     tile_pixel_width== 0)
+
+    def test_export_padded_parent_to_file(self, tile_pixel_height, tile_pixel_width, filepath_output):
+        # first call the export_padded_parent_to_file
+        # 
+
 
                         #    def test_tile_division_height(self, tile_pixel_height):
 #        """This test will check if the tile's height 
