@@ -85,11 +85,71 @@ class ParentTransformationsFromTile:
 
         return total_padding
     
-    def generate_file_name_from_parent(self):
-        raise NotImplementedError
+    def generate_file_name_from_parent(self, file_name: str, tile_pixel_width: int, tile_pixel_height: int) -> str:
+        """
+        This function generates a filename from parent with the padding values
+            - this function assumes that a CSV file with the name of every image in the directory exists
+
+                20100905_000036_aia.lev1_euv_12s_4k.jpg
+                date_time_instrument.___wavelength_timeseries_resolution?
+                Take name as is and split on second '.' extension to make the file name a string w/o the 'jpg'
+                Append '_' + padding, which contains the values for the 'top_bottom_left_right' padding and then reattach '.jpg'
+        """
+
+        file_name_stem = file_name.split(".", 1)[0]
+
+        # Get the top, bottom, left, and right padding values as strings
+        top_and_bottom = str(self.calc_padding_height(tile_pixel_height=tile_pixel_height))
+        top = top_and_bottom[0]
+        bottom = top_and_bottom[1]
+
+        left_and_right = str(self.calc_padding_width(tile_pixel_width=tile_pixel_width))
+        left = left_and_right[0]
+        right = left_and_right[1]
+        
+        padding_values = f"{top}_{bottom}_{left}_{right}"
+
+        file_name_stem += "_"
+        file_name_stem += padding_values
+        updated_file_name = file_name_stem + ".jpg"
+
+        return updated_file_name
 
 
-    def export_padded_parent_meta(self):
+
+    def export_padded_parent_meta(self, file_name: str) -> None:
+        """
+        This function creates an empty dictionary and creates key values with the information in the filename
+        The function will then export the padded parent meta to the local directory
+            - Convert date in string format to a datetime object
+                datetime.strptime(date_string, format)
+                - strptime returns a ValueError if it cannot be parsed
+
+        *************** 4/26/23 Start here - We need to finish defining the dictionary *****************
+        AIA and HMI Data Info - https://www.lmsal.com/sdodocs/doc/dcur/SDOD0060.zip/zip/entry/
+        Team Red Logic for creating JSOC Format strings - https://github.com/hits-sdo/hits-sdo-downloader/blob/main/downloader.py
+
+        """
+        
+        # 1) Create an empty dictionary
+        # 2) Keys = date, instrument, lev1 thing, wavelength, 12s thing, resolution, then the values for the top, bottom, left, right padding, and file format
+        # ******* Design decision - data types for each key-value pair *************
+        # 20100905_000036_aia.lev1_euv_12s_4k.jpg
+        # YYYYMMDD_HHmmSS
+
+        file_meta_dict = {
+            "date_time": datetime.strptime(date_string, format),
+            "instrument": ["aia", "hmi"],
+            "data_series_name": "aaaaaaa",
+            "wavelength": "aaaaaa",
+            "timeseries": "...",
+            "resolution": "aaaaa",
+            "top_padding_value": "aaaa",
+            "bottom_padding_value": "aaaa",
+            "left_padding_value": "aaaa",
+            "right_padding_value": "aaaa",
+            "file_format": ".jpg"
+        }
         pass
 
 
