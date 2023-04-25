@@ -148,11 +148,19 @@ class ParentTransformationsFromTile:
             "bottom_padding_value": "aaaa",
             "left_padding_value": "aaaa",
             "right_padding_value": "aaaa",
-            "file_format": ".jpg"
+            "file_format": ".jpg",
+            "row_offsetted_center_pixel": int,      # These should be data members, but they aren't yet - 4/24
+            "col_offsetted_center_pixel": int,
         }
         pass
 
-
+    def calc_padded_parent_center_pixel(self):
+        """
+        This function calculates the center pixel with the offset
+            Assume that center of img is the center of the sun
+            The offset center pixel coordinate is then entered into the dictionary
+        """
+        raise NotImplementedError
 
 
 
