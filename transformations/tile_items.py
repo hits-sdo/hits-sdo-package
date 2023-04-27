@@ -22,6 +22,13 @@ class TilerClass:
     parent_image: bytearray
     tile_width: int
     tile_height: int
+    tile_path_output: str
+    parent_height : int
+    parent_width : int
+    parent_path_input : str
+    tile_meta_dict: dict
+    tile_item_list: list[TileItem]
+
     #tile_list: list[TileItem]
 
     #tile_image: 2D array
@@ -42,21 +49,14 @@ class TilerClass:
     def cut_up_tiles(self):
         """This function takes the parent image from parent_transform_from_tile
         and divides it up using the tile width and height from TileItem"""
-        # Calc number of rows and cols of tiles
 
-        # parent_height = ParentTransformationsFromTile.parent_img_height_after_padding
-        # parent_width = ParentTransformationsFromTile.parent_img_width_after_padding
+        num_rows_parent = self.parent_height // self.tile_height
+        num_cols_parent = self.parent_width // self.tile_width
 
-
-        parent_height = 4096
-        parent_width = 4096
-
-        num_rows_parent = parent_height // self.tile_height
-        num_cols_parent = parent_width // self.tile_width
-
-        img_path = "./user_sample_data/latest_4096_0193.jpg"
-        parent_image = Image.open(img_path)
-
+        parent_image = Image.open(self.parent_path_input)
+        #transformations/tempTiles
+        # create a folder called tiles
+        os.makedirs(self.tile_path_output, exist_ok=True)
 
         for row in range(num_rows_parent):
             for col in range(num_cols_parent):
@@ -64,31 +64,50 @@ class TilerClass:
                 start_y = row * self.tile_height
                 width = self.tile_width + start_x
                 height = self.tile_height + start_y
-                
-                # print(start_x)
-                # print(start_y)
-                # print(width)
-                # print(height)
-
 
                 # crop duplicate
                 temp_image = parent_image.crop((start_x, start_y, width, height))
 
+
                 # save as new tile to a folder called tiles in /user_sample_data/
-                temp_image.save(f"stupid/tile_{row}_{col}.jpg", "JPEG")
+                temp_image.save(f"{self.tile_path_output}/tile_{start_y}_{start_x}.jpg", "JPEG")
                 
-
-        
-        # temp1 = parent_image.crop((0, 0, 1024, 1024))
-        # temp2 = parent_image.crop((1024, 1024, 2048, 2048))
-
-        # temp1.save("tile1.jpg")
-        # temp2.save("tile2.jpg")
-        
+                # create a TileItem
+                tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x)
+                self.tile_item_list.append(tile_item)
 
 
-        # #return list
+        # return list
         # pass
+        # {
+        #     INSTRUMENT: jacob will do
+        #     DATE : APRIL 4, 2021
+        #     TIME : 12:00:00
+        #     WAVELENGTH : 193.4823420
+        #     AIA_or_HMI : AIA
+        #     PADDING : (2,34,5)
+        #     NUMBER_CHILD_TILES : 100
+        #     TILES : TILELIST  (OUR LIST OF NAMED TUPLES)
+        #     CENTER : (X,Y)
+        #     ~RADIUS : 5
+        # }
+    def generate_tile_metadata(self) -> dict:
+        """Generate metadata for tiles"""
+        self.tile_meta_dict["number_child_tiles"] = len(self.tile_item_list)
+        self.tile_meta_dict["tile_list"] = self.tile_item_list
+        #self.tile_meta_dict["center"] = parent_transform_from_tile.center #assuming this is completed in other class
+        #self.tile_meta_dict["radius"] = parent_transform_from_tile.radius #assuming this is completed in other class
+        pass
+    
+    def convert_dict_to_json(self):
+        """Convert metadata to json"""
+        dict = self.tile_meta_dict
+    
+        pass
+
+    def generate_tile_fpath_write(self):
+        """Generate file path to write tile to"""
+        pass
 
     def reconstruct_parent_img(self):
         pass
@@ -105,7 +124,13 @@ class TilerClass:
 
 
 if __name__ == "__main__":
-    tc = TilerClass(None ,64 ,64)
+    # parent_height = ParentTransformationsFromTile.parent_img_height_after_padding
+    # parent_width = ParentTransformationsFromTile.parent_img_width_after_padding
+
+    #these are example values set the init
+    # parent_height = 4096
+    # parent_width = 4096
+    tc = TilerClass(None ,64 ,64, 4096, 4096)
     tc.cut_up_tiles()
 
 
