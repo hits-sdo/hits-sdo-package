@@ -102,7 +102,7 @@ class TilerClass:
     def convert_dict_to_json(self):
         """Convert metadata to json"""
         dict = self.tile_meta_dict
-    
+
         pass
 
     def generate_tile_fpath_write(self):
@@ -132,6 +132,14 @@ if __name__ == "__main__":
     # parent_width = 4096
     tc = TilerClass(None ,64 ,64, 4096, 4096)
     tc.cut_up_tiles()
+
+
+# TODO: RADIUS FUNCTION
+# convert to json
+# Subtract radius from center x, center y. Do image.crop with those new values
+# generate file path to write tile to
+# export tiles to local
+# reconstruct parent image
 
 
 # creating a class
