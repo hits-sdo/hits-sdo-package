@@ -1,8 +1,22 @@
 """
 Uses dataclasses to simplify attribute assignment..? read python guide
+
+#TODO
+    1) Implement calc_padded_parent_center_pixel()
+    2) Specify order of operations for member functions
+        - Use this process to sniff out bad code smells
+        - Check for unused data attributes and redundant function calls & input parameters
+    3) Standardize terminology for file path variables naming conventions & where they should be constructed
+        - Need to avoid losing parts of the path so we can export it
+        - Need to avoid the path being too specific/rigid and system agnostic
+    4) Create a script for main() that tests the class' member functions
+        - This is last, not sure if separately or in a single team
+    
+    * Paths are hard -> utils function because every team will struggle with this when pivoting to ML
 """
 from PIL import Image
 from dataclasses import dataclass
+from datetime import datetime
 
 @dataclass
 
@@ -18,6 +32,8 @@ class ParentTransformationsFromTile:
     parent_file_is_valid: bool
     parent_file_file_type: str
     parent_file_source: str
+
+    file_meta_dict: dict
 
 
 
@@ -106,9 +122,10 @@ class ParentTransformationsFromTile:
         left_and_right = str(self.calc_padding_width(tile_pixel_width=tile_pixel_width))
         left = left_and_right[0]
         right = left_and_right[1]
-        
+
         padding_values = f"{top}_{bottom}_{left}_{right}"
 
+        # Reconstruct the file name by concatenating the stem and the extension
         file_name_stem += "_"
         file_name_stem += padding_values
         updated_file_name = file_name_stem + ".jpg"
@@ -119,40 +136,54 @@ class ParentTransformationsFromTile:
 
     def export_padded_parent_meta(self, file_name: str) -> None:
         """
-        This function creates an empty dictionary and creates key values with the information in the filename
+        This function creates an empty dictionary and creates key values with the 
+        information in the filename
         The function will then export the padded parent meta to the local directory
             - Convert date in string format to a datetime object
                 datetime.strptime(date_string, format)
                 - strptime returns a ValueError if it cannot be parsed
-
-        *************** 4/26/23 Start here - We need to finish defining the dictionary *****************
-        AIA and HMI Data Info - https://www.lmsal.com/sdodocs/doc/dcur/SDOD0060.zip/zip/entry/
-        Team Red Logic for creating JSOC Format strings - https://github.com/hits-sdo/hits-sdo-downloader/blob/main/downloader.py
+        
+        Format of file name:
+        Images captured by AIA: 20100905_000036_aia.lev1_euv_12s_4k_top_bottom_left_right.jpg
+        Images captured by HMI: 20100905_000036_hmi.M_720s_4k_top_bottom_left_right.jpg
+        
+        Date format: YYYYMMDD_HHmmSS
 
         """
-        
-        # 1) Create an empty dictionary
-        # 2) Keys = date, instrument, lev1 thing, wavelength, 12s thing, resolution, then the values for the top, bottom, left, right padding, and file format
-        # ******* Design decision - data types for each key-value pair *************
-        # 20100905_000036_aia.lev1_euv_12s_4k.jpg
-        # YYYYMMDD_HHmmSS
 
-        file_meta_dict = {
-            "date_time": datetime.strptime(date_string, format),
-            "instrument": ["aia", "hmi"],
-            "data_series_name": "aaaaaaa",
-            "wavelength": "aaaaaa",
-            "timeseries": "...",
-            "resolution": "aaaaa",
-            "top_padding_value": "aaaa",
-            "bottom_padding_value": "aaaa",
-            "left_padding_value": "aaaa",
-            "right_padding_value": "aaaa",
-            "file_format": ".jpg",
-            "row_offsetted_center_pixel": int,      # These should be data members, but they aren't yet - 4/24
-            "col_offsetted_center_pixel": int,
+        #[20100905, 000036, aia.lev1, euv, 12s, 4k, top, bottom, left, right.jpg]
+        #[20100905, 000036, hmi.M, 720s, 4k, top, bottom, left, right.jpg]
+        file_name_values = file_name.split("_")
+
+        # If the instrument is HMI, it lacks a wavelength value so we insert
+        # an empty string to take its place
+        if len(file_name_values) == 9 :
+            file_name_values.insert(3, "")
+
+        # Splitting the instrument and data series name
+        file_name_values_index_two = file_name_values[2].split('.')
+        # Splitting the right padding value and file extension name
+        file_name_values_index_nine = file_name_values[9].split('.')
+
+        # Datetime Object
+        date_string = file_name_values[0] + file_name_values[1]
+
+        # Creating the dictionary
+        self.file_meta_dict = {
+            "date_time": datetime.strptime(date_string, "%Y%m%d%H%M%S"),
+            "instrument": file_name_values_index_two[0],
+            "data_series_name": file_name_values_index_two[1],
+            "wavelength": file_name_values[3],
+            "timeseries": file_name_values[4],
+            "resolution": file_name_values[5],
+            "top_padding_value": int(file_name_values[6]),
+            "bottom_padding_value": int(file_name_values[7]),
+            "left_padding_value": int(file_name_values[8]),
+            "right_padding_value": int(file_name_values_index_nine[0]),
+            "file_format": file_name_values_index_nine[1],
+            # "row_offsetted_center_pixel": int,      # These should be data members, but they aren't yet - 4/24
+            # "col_offsetted_center_pixel": int,
         }
-        pass
 
     def calc_padded_parent_center_pixel(self):
         """
@@ -164,17 +195,20 @@ class ParentTransformationsFromTile:
 
 
 
-    def export_padded_parent_to_file(self, filepath_output:str, tile_pixel_width:int, tile_pixel_height:int)->bool:
-        
+    def export_padded_parent_to_file(self, file_name:str, tile_pixel_width:int, tile_pixel_height:int)->bool:
+        #filepath_output is the full path, contains file_stem/updated_file_name
+        #file directory is the folder
+        #file path is the directory + updated_file_name
+        #updated_file_name is the name of the file
         try:
             parent_image = Image.open(self.parent_file_source)
             new_size = (self.parent_img_width_after_padding, self.parent_img_height_after_padding)
             padded_parent_image = Image.new("RGB", new_size)
             box_param = (self.calc_padding_width(tile_pixel_width=tile_pixel_width), self.calc_padding_height(tile_pixel_height=tile_pixel_height))
             padded_parent_image = Image.paste(parent_image, box=box_param)
-        #   new_name = generate_file_name_from_parent()
-        #   padded_parent_image.save(new_name, format="JPG")
-            padded_parent_image.save("blah.jpg", format="JPG")
+            new_name = generate_file_name_from_parent(file_name, tile_pixel_width, tile_pixel_height)
+            filepath_output = new_name + "what is stem" 
+            padded_parent_image.save(filepath_output, format="JPG")
         except:
             return False
 
@@ -183,5 +217,10 @@ class ParentTransformationsFromTile:
 
         return True
 
+def main():
+    """
+    Driver function to test our class
+    """
 
-    
+if __name__ == '__main__':
+    main()
