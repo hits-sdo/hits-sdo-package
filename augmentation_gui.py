@@ -1,249 +1,212 @@
-'''
-Objective:
-'
-GUI features:
-+ Button -> Option to upload custom file
-    - later on implement uploading multiple files
-    - simultaneous processing/rendering of image augmentation data (hard limit to # of images processed at once)
-    - option to specify output folder for batch of augmentation
-    - (json file for # order and list of augmentations performed on image(s))
-    - hard cap on user data stored in the cloud 
-    - user selects path/folder
-    - display loading % to user
-    - drag and drop component - specify order & add/remove augmentations. Augmentation name and details are shown in box. Click on box to expand/specify values
-    - download button (images and meta data)
-
-+ Display -> Display sample visualization of data to user
-
-+ Menu -> Settings sidebar
-    - Specify default file path (default file format)
-    - History of past uploads (text file, size data, augmentations performed, image format)
-    - (App cannot access local file folder, MUST be cloud storage)
-    - choose set of augmentations on dataset
-    - select/de-select all
-    - Sort based on meta data
-    - search is a certain set of augmentations is performed on a certain set of images
-
-+ Misc/User
-    - login
-    - saving presets of augmentations
-    - 
-
-Plan for today Mar 30, 2023:
-- [] Add file upload option
-- [] render uploaded image
-- [] sidebar placeholder
-- [] perform random augmentations
-
-Plan for Mar 31st 2023:
-- [] Get rid of dark img problem
-- [] Add download button to download augmented image & augmentation sequence
-- [] 
-
-Plan for Apr 6th 2023:
-- [] Get rid of dark image rendering bug
-- [] Downloading a JSON file from our program to local computer of image augmentation state
-- [] Upload a JSON file and perform the augmentation defined in that
-
-Plan for Apr 7th 2023:
-- [] Sidebar to randomize augmentation
-- [] Make randomizer outcome editable for user-defined dictionary 
-- [] Add image info in the dictionary
-- [] flixible target resolution
-
-Plan for April 20th 2023:
-- [] User defined target resolution (default: 64x64)
-- [] Allow user to specify target crop location (default: center)
-    - Crops the input image to the specified region
-    - Selecting a region by dragging a box
-    - Be able to use superimage when cropping
-- [] Allow user to work with RGB colors  
-- [] Work with Pylint?
-
-Plan for April 27th 2023:
-- [] Previous Todos
-- [] Clean up code
-- [] Make "original image" only appear when not in crop mode
-
-Left off: changing augments in the widget is finnicky
-'''
-
-# https://docs.streamlit.io/library/api-reference/widgets/st.multiselect
-# https://docs.streamlit.io/library/api-reference/widgets/st.file_uploader
-# > suggested syntax: uploaded_file = st.file_uploader("Choose an image...", type="jpg")
-
-
-
-import os
 import numpy as np
 import pickle
-import matplotlib.pyplot as plt
-import cv2 as cv
-import glob
 from augmentation_list import AugmentationList
 from augmentation import Augmentations
 import streamlit as st
 from PIL import Image
 from augmentation_test import read_image
-from io import BytesIO
 import tempfile
 import json
 from streamlit_cropper import st_cropper
-from streamlit_modal import Modal
+
 
 def generate_augmentation():
-    # del st.sesstion_state['random_init_dict']
-    # Place JSON into augment_dict
+    '''
+    creates a random augmentation dictionary and
+    assigns it to a session state variable
+    '''
+
     augment_list = AugmentationList(st.session_state['instrument'])
     st.session_state['random_init_dict'] = augment_list.randomize()
 
-def apply_augmentation(img, col2, user_dict):
+
+def apply_augmentation(img, col2, user_dict, cord_tup):
+    '''
+    Applys the current augmentation settings to the selected image
+    checked if a user selected a region of interest -> cord_tup
+    And displays the augmented image to the user
+    '''
+
     st.session_state['random_init_dict'] = user_dict
     augments = Augmentations(img, st.session_state['random_init_dict'])
     augmented_img, title = augments.perform_augmentations()
+
     col2.header(title)
-    col2.image(augmented_img,use_column_width='always',clamp=True)
-    js = json.dumps(st.session_state['random_init_dict'])   # Convert transformation dictionary to JSON string
+    if cord_tup is not None:
+        augmented_img = augmented_img[cord_tup[1]:cord_tup[1] + cord_tup[3],
+                                      cord_tup[0]:cord_tup[0] + cord_tup[2]]
+
+    col2.image(augmented_img, use_column_width='always', clamp=True)
+    js = json.dumps(st.session_state['random_init_dict'])
+
+    # Convert transformation dictionary to JSON string
     augmented_img *= 255  # un-normalize image
-    a_img = pickle.dumps(augmented_img) # serialize into bytestring
-    col2.download_button(label="Download Augmented Image", data=a_img, file_name="augmented_img.p", mime="image/p")
-    col2.download_button(label="Download Augmentation Dictionary", data=js, file_name="augmented_dict.json", mime="application/json")
+    a_img = pickle.dumps(augmented_img)  # serialize into bytestring
 
-def refresh():
-    st.experimental_rerun()
+    col2.download_button(label="Download Augmented Image",
+                         data=a_img, file_name="augmented_img.p",
+                         mime="image/p")
+    col2.download_button(label="Download Augmentation Dictionary", data=js,
+                         file_name="augmented_dict.json",
+                         mime="application/json")
 
-    
+
 def main():
-    # uploaded_dict = st.empty()
-    # st.caching.clear_cache()
+    ''' Start of the GUI appplication '''
+
     st.header("Image Augmentation Tool")
-    uploaded_file = st.file_uploader("Choose an image...", type=["p", "jpg"],key='img')
-    with st.form('my-form', clear_on_submit = True):
+    # Allow user to upload an image to augment on
+    uploaded_file = st.file_uploader(
+        "Choose an image...", type=["p", "jpg", "png"], key='img'
+        )
+
+    # Allow user to upload a dictionary of augmentations
+    with st.form('my-form', clear_on_submit=True):
         uploaded_dict = st.file_uploader("Choose a dictionary", type=["json"])
         submitted = st.form_submit_button("UPLOAD!")
-    
-    # with st.form("my-form", clear_on_submit=True):
-    #    file = st.file_uploader("FILE UPLOADER")
-    col1, col2 = st.columns([1,1])
-    cropContainer = col1.empty()
+
+    col1, col2 = st.columns([1, 1])
 
     # Setup Sidebar
-    st.sidebar.title("Settings") 
-    
-    # Get Instument
-    imageInst = st.sidebar.selectbox("Select Instrument", ('euv', 'mag'), key='instrument', on_change=generate_augmentation)
-    augment_list = AugmentationList(instrument = imageInst)
+    st.sidebar.title("Settings")
+    # Get user-selected instument
+    imageInst = st.sidebar.selectbox("Select Instrument", ('euv', 'mag'),
+                                     key='instrument',
+                                     on_change=generate_augmentation)
+    augment_list = AugmentationList(instrument=imageInst)
+
+    # Setup the random_init_dict session state variable
     if 'random_init_dict' not in st.session_state:
         st.session_state['random_init_dict'] = augment_list.randomize()
-
-    # Target Resolution
-
-    
-    # user_dict = None
     if uploaded_dict is not None and submitted is True:
         st.session_state["random_init_dict"] = json.load(uploaded_dict)
-         # uploaded_dict = st.empty() #new 
-    #augment_dict = augment_list.randomize()
 
+    # Allow user to select which augmentations to be applied
     user_dict = {}
-    options = st.sidebar.multiselect("Choose augmentations: ", augment_list.keys, default=list(st.session_state['random_init_dict'].keys()))#,on_change=refresh)
-    #st.sidebar.write('You selected: ', options)
-    
-    
-    for key in options: 
-        #TODO switch to python 3.10 and use match statement 
+    options = st.sidebar.multiselect("Choose augmentations: ",
+                                     augment_list.keys,
+                                     default=list
+                                     (st.session_state
+                                      ['random_init_dict'].keys()))
+
+    # Loop through all the user selected augmentation options
+    # and apply them to our dictionary
+    for key in options:
         if 'rotate' == key:
-            rotation = st.sidebar.slider("Rotation:", -180.0, 180.0, float(st.session_state['random_init_dict'][key]) if key in st.session_state['random_init_dict'] else 0.0 )
-            
-            user_dict['rotate'] = rotation    
+            if key in st.session_state['random_init_dict']:
+                state = float(st.session_state['random_init_dict'][key])
+            else:
+                state = 0.0
+
+            rotation = st.sidebar.slider("Rotation:", -180.0, 180.0, state)
+            user_dict['rotate'] = rotation
+
         if 'v_flip' == key:
             user_dict['v_flip'] = True
+
         if 'h_flip' == key:
             user_dict['h_flip'] = True
-        if 'blur' == key :
-            user_dict['blur'] = (2,2)
+
+        if 'blur' == key:
+            user_dict['blur'] = (2, 2)
+
         if 'brighten' == key:
-            
-            brighten = st.sidebar.slider("Brighten:", 0.5, 1.5, float(st.session_state['random_init_dict'][key]) if key in st.session_state['random_init_dict'] else 1.0 )
+            if key in st.session_state['random_init_dict']:
+                state = float(st.session_state['random_init_dict'][key])
+            else:
+                state = 1.0
+
+            brighten = st.sidebar.slider("Brighten:", 0.5, 1.5, state)
             user_dict['brighten'] = brighten
 
         if 'zoom' == key:
-            zoom = st.sidebar.slider("Zoom:", 0.5, 5.0, float(st.session_state['random_init_dict'][key]) if key in st.session_state['random_init_dict'] else 1.0 )
+            if key in st.session_state['random_init_dict']:
+                state = float(st.session_state['random_init_dict'][key])
+            else:
+                state = 1.0
+
+            zoom = st.sidebar.slider("Zoom:", 0.5, 5.0, state)
             user_dict['zoom'] = zoom
 
         if 'translate' == key:
-            x_translate = st.sidebar.slider("X-Axis Translation:", -10, 10, st.session_state['random_init_dict'][key][0] if key in st.session_state['random_init_dict'] else 0 )
-            y_translate = st.sidebar.slider("Y-Axis Translation:", -10, 10, st.session_state['random_init_dict'][key][1] if key in st.session_state['random_init_dict'] else 0)
+            if key in st.session_state['random_init_dict']:
+                state = st.session_state['random_init_dict'][key]
+            else:
+                state = (0, 0)
+
+            x_translate = st.sidebar.slider(
+                "X-Axis Translation:", -10, 10, state[0])
+            y_translate = st.sidebar.slider(
+                "Y-Axis Translation:", -10, 10, state[1])
+
             user_dict['translate'] = (x_translate, y_translate)
 
-    
-
-
-    # if user_dict != st.session_state['random_init_dict']:
-    #     st.session_state['random_init_dict'] = user_dict
-    
-    cropper_modal = Modal(key="Crop State", title="Crop Image")
     if uploaded_file is not None:
-        
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             # write to temp file
             temp_file.write(uploaded_file.read())
-            #get path
+            # get path
             file_path = temp_file.name
+            temp_file.close()
             img = read_image(file_path, uploaded_file.name.split('.')[-1])
             col1.header("Original Image")
-            #col1.image(img,use_column_width='always',clamp=True)   
+            cordTuple = None
 
-            # Prompt User to crop if they clicked the "Crop Image" button
-            crop_button_clicked = st.button("Crop Image")
-            if crop_button_clicked or ("crop_button" in st.session_state and st.session_state["crop_button"] == True):
-                st.session_state["crop_button"] = True
-                
-                with col1:
-                    pilImg = Image.fromarray(np.uint8(255*img))#Image.open(file_path)
-                    #_ = pilImg.thumbnail((350, 350)) # Resize image to 350x350
-                    s = 350
-                    pilImg = pilImg.resize((s, s))
-                    
-                    # 
-                    # img_resized = np.array(Image.fromarray(img_array).resize((350, 350)))
+        # Prompt User to crop if they clicked the "Crop Image" button
+        crop_button_clicked = st.button("Crop Image")
+        check_crop = (
+            "crop_button" in st.session_state and
+            st.session_state["crop_button"] is True
+            )
 
-                    #width, _ = pilImg.size
-                    # Todo: Cannot figure out how to get the width of the column. So I used a constant 350
-                    
-                    # Prompt to select bounds using the streamlit cropper library
-                    #st.subheader("Select Bounds:")
-                    cropped_coords = st_cropper(pilImg, realtime_update=True, box_color='#0000FF', 
-                                        aspect_ratio=None, should_resize_image=True, return_type='box')
-                    #st.write(cropped_coords)
-                    
-                    scaling_factor = img.shape[0] / s
-                    left, top, width, height = tuple(map(int, cropped_coords.values()))
-                    # scale all values
-                    left = int(left * scaling_factor)
-                    top = int(top * scaling_factor)
-                    width = int(width * scaling_factor)
-                    height = int(height * scaling_factor)
-                    
-                    cropped_image = img[top:top + height, left:left + width]
-                    # st.session_state['img'] = cropped_image
-                    
-                    # Show Preview
-                    st.subheader("Preview:")
-                    st.image(cropped_image, use_column_width='always') # To extend: use_column_width='always',clamp=True
-                    
-                    # Apply the crop to the image
-                    img = cropped_image
+        if crop_button_clicked or check_crop:
+            st.session_state["crop_button"] = True
 
-            st.sidebar.button("Random augmentation", on_click=generate_augmentation)
-            st.sidebar.button("Apply augmentation", on_click=apply_augmentation, args=([img, col2, user_dict]))
+            with col1:
+                pilImg = Image.fromarray(np.uint8(255*img))
+
+                # TODO: Cannot figure out how to get column width
+                # So used constant 350
+                size = 350
+                pilImg = pilImg.resize((size, size))
+
+                # Prompt to select bounds
+                # using the streamlit cropper library
+                cropped_coords = st_cropper(pilImg, realtime_update=True,
+                                            box_color='#0000FF',
+                                            aspect_ratio=None,
+                                            should_resize_image=True,
+                                            return_type='box')
+
+                scaling_factor = img.shape[0] / size
+                cordTuple = tuple(map(int, cropped_coords.values()))
+
+                # scale all values
+                cordTuple = tuple(
+                    [int(x * scaling_factor) for x in cordTuple]
+                    )
+
+                cropped_image = img[
+                    cordTuple[1]:cordTuple[1] + cordTuple[3],
+                    cordTuple[0]:cordTuple[0] + cordTuple[2]
+                ]
+
+                # Show Preview
+                st.subheader("Cropped Image:")
+                st.image(cropped_image, use_column_width='always')
+
+        else:
+            col1.image(img, use_column_width='always', clamp=True)
+
+        st.sidebar.button(
+            "Random augmentation", on_click=generate_augmentation
+            )
+
+        st.sidebar.button(
+            "Apply augmentation", on_click=apply_augmentation,
+            args=([img, col2, user_dict, cordTuple])
+            )
+
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-    
