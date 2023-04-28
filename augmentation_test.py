@@ -179,7 +179,7 @@ class Tests_on_Augmentations(unittest.TestCase):
 
     def test_flip(self):
         """
-       
+        check if the image flip works
         """
         image_tr = self.augmentations.v_flip(self.image)
 
@@ -204,7 +204,9 @@ class Tests_on_Augmentations(unittest.TestCase):
         plt.show()
 
     def test_blur(self):
-        """TODO add docstring"""
+        """
+        check if an image is blur kernel size is adequate
+        """
         image_tr = self.augmentations.blur(self.image)
         # ensuring same size
         self.assertEqual(image_tr.shape, (64, 64))
