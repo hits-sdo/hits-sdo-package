@@ -2,8 +2,8 @@
 Uses dataclasses to simplify attribute assignment..? read python guide
 
 #TODO
-    1) Implement calc_padded_parent_center_pixel()
-    2) Specify order of operations for member functions
+    1) Implement calc_padded_parent_center_pixel() //done
+    2) Specify order of operations for member functions // done
         - Use this process to sniff out bad code smells
         - Check for unused data attributes and redundant function calls & input parameters
     3) Standardize terminology for file path variables naming conventions & where they should be constructed
@@ -11,7 +11,7 @@ Uses dataclasses to simplify attribute assignment..? read python guide
         - Need to avoid the path being too specific/rigid and system agnostic
     4) Create a script for main() that tests the class' member functions
         - This is last, not sure if separately or in a single team
-    
+    5) 🤑 Profit 🤑
     * Paths are hard -> utils function because every team will struggle with this when pivoting to ML
 """
 from PIL import Image
@@ -19,7 +19,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 @dataclass
-
 class ParentTransformationsFromTile:
     """This will keep track of an output tile file"""
 
@@ -29,11 +28,14 @@ class ParentTransformationsFromTile:
     parent_img_width_after_padding: int
     parent_img_height_after_padding: int
 
-    parent_file_is_valid: bool
-    parent_file_file_type: str
+    # parent_file_is_valid: bool
+    # parent_file_file_type: str
     parent_file_source: str
 
     file_meta_dict: dict
+
+    row_offsetted_center_pixel: int
+    col_offsetted_center_pixel: int
 
 
 
@@ -112,16 +114,15 @@ class ParentTransformationsFromTile:
                 Append '_' + padding, which contains the values for the 'top_bottom_left_right' padding and then reattach '.jpg'
         """
 
-        file_name_stem = file_name.split(".", 1)[0]
+        file_name_stem_list = file_name.split(".")
+        file_name_stem = file_name_stem_list[0] + "." + file_name_stem_list[1]
 
         # Get the top, bottom, left, and right padding values as strings
-        top_and_bottom = str(self.calc_padding_height(tile_pixel_height=tile_pixel_height))
-        top = top_and_bottom[0]
-        bottom = top_and_bottom[1]
+        top_and_bottom = self.calc_padding_height(tile_pixel_height=tile_pixel_height)
+        (top, bottom) = top_and_bottom
 
-        left_and_right = str(self.calc_padding_width(tile_pixel_width=tile_pixel_width))
-        left = left_and_right[0]
-        right = left_and_right[1]
+        left_and_right = self.calc_padding_width(tile_pixel_width=tile_pixel_width)
+        (left, right) = left_and_right
 
         padding_values = f"{top}_{bottom}_{left}_{right}"
 
@@ -181,21 +182,31 @@ class ParentTransformationsFromTile:
             "left_padding_value": int(file_name_values[8]),
             "right_padding_value": int(file_name_values_index_nine[0]),
             "file_format": file_name_values_index_nine[1],
-            # "row_offsetted_center_pixel": int,      # These should be data members, but they aren't yet - 4/24
-            # "col_offsetted_center_pixel": int,
+            "row_offsetted_center_pixel": self.row_offsetted_center_pixel,
+            "col_offsetted_center_pixel": self.col_offsetted_center_pixel
         }
 
-    def calc_padded_parent_center_pixel(self):
+    def calc_padded_parent_center_pixel(self)->None:
         """
         This function calculates the center pixel with the offset
             Assume that center of img is the center of the sun
             The offset center pixel coordinate is then entered into the dictionary
+            The pixel will be calculated with floor division
         """
-        raise NotImplementedError
+        self.row_offsetted_center_pixel = self.parent_img_width_after_padding//2
+        self.col_offsetted_center_pixel = self.parent_img_height_after_padding//2
 
+    def get_padded_parent_center_pixel(self)->tuple:
+        """"
+        This function returns a tuple of the row and col of the offsetted center pixel of the parent
+            image after it's been padded.
+        """
+        return (self.row_offsetted_center_pixel, self.col_offsetted_center_pixel)
 
-
-    def export_padded_parent_to_file(self, file_name:str, tile_pixel_width:int, tile_pixel_height:int)->bool:
+    def export_padded_parent_to_file(self, file_name:str, tile_pixel_width:int, tile_pixel_height:int):
+        """
+        This function returns a boolean 
+        """
         #filepath_output is the full path, contains file_stem/updated_file_name
         #file directory is the folder
         #file path is the directory + updated_file_name
@@ -203,24 +214,66 @@ class ParentTransformationsFromTile:
         try:
             parent_image = Image.open(self.parent_file_source)
             new_size = (self.parent_img_width_after_padding, self.parent_img_height_after_padding)
+
             padded_parent_image = Image.new("RGB", new_size)
             box_param = (self.calc_padding_width(tile_pixel_width=tile_pixel_width), self.calc_padding_height(tile_pixel_height=tile_pixel_height))
+
             padded_parent_image = Image.paste(parent_image, box=box_param)
-            new_name = generate_file_name_from_parent(file_name, tile_pixel_width, tile_pixel_height)
-            filepath_output = new_name + "what is stem" 
+            new_name = self.generate_file_name_from_parent(file_name, tile_pixel_width, tile_pixel_height)
+
+            filepath_output = f"user_sample_data/{new_name}" 
             padded_parent_image.save(filepath_output, format="JPG")
-        except:
-            return False
 
-            # FileNotFound exception
+        except FileNotFoundError:
+            print("😦 File not found 😦")
 
 
-        return True
+
+
 
 def main():
     """
     Driver function to test our class
     """
+    trans_img = ParentTransformationsFromTile(
+        parent_img_width=32,
+        parent_img_height=32,
+        parent_img_width_after_padding=0,
+        parent_img_height_after_padding=0,
+        parent_file_source = "./user_sample_data/20100905_000036_aia.lev1_euv_12s_4k.jpg",
+        file_meta_dict = {},
+        row_offsetted_center_pixel=0,
+        col_offsetted_center_pixel=0
+    )
+
+    h = trans_img.calc_padding_height(tile_pixel_height=64)
+    w = trans_img.calc_padding_width(tile_pixel_width=64)
+
+    print("😱 Height: ", h, "Width: ", w, '😱')
+
+    corner_piece = trans_img.calc_corner_pieces(tile_pixel_height=64, tile_pixel_width=64)
+    print('😤', corner_piece, '😤')
+
+    overall = trans_img.calc_overall_padding(tile_pixel_height=64, tile_pixel_width=64)
+    print('🤩', overall, '🤩')
+
+    generate = trans_img.generate_file_name_from_parent(file_name='20100905_000036_aia.lev1_euv_12s_4k.jpg', tile_pixel_width=64, tile_pixel_height=64)
+    print('😭', generate, '😭')
+    
+    export_meta = trans_img.export_padded_parent_meta()
+    
+    calc_center_pix = trans_img.calc_padded_parent_center_pixel()
+
+    get_center_pix = trans_img.get_padded_parent_center_pixel()
+
+    export_pad_parent_file = trans_img.export_padded_parent_to_file()
+    
+    
+    # 🤨 TODO 4/28/23 🤨
+    # call for export_padded_parent_meta()
+    # call for calc_parent_padded_center_pixel()
+    # call for getter of ^^^
+    # call for export_padded_parent_to_file()
 
 if __name__ == '__main__':
     main()
