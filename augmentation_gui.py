@@ -28,7 +28,8 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
     '''
 
     st.session_state['random_init_dict'] = user_dict
-    augmented_img = None
+    augments = Augmentations(img, st.session_state['random_init_dict'])
+    augmented_img, title = augments.perform_augmentations()
     # if user defined crop, perform cropped augmentation
     if cord_tup is not None:
         # get the center of the image when it's cropped
@@ -38,10 +39,10 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
 
         # get distance from center to each side
         height, width = img.shape[:2]
-        left_length = center_pos[0]
-        right_length = width - center_pos[0]
-        top_length = center_pos[1]
-        down_length = height - center_pos[1]
+        left_length = center_pos[1]
+        right_length = width - center_pos[1]
+        top_length = center_pos[0]
+        down_length = height - center_pos[0]
         diff_h = right_length - left_length
         diff_v = top_length - down_length
 
@@ -57,14 +58,14 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
         else:
             v_padding = (-diff_v, 0)
 
-        st.write((v_padding, h_padding))
+        # st.write((v_padding, h_padding))
 
         # np.pad(A, ((top,bottom),(left,right)), 'constant')
         padded_img = np.pad(img, (v_padding, h_padding, (0, 0)),
                             mode='constant')
 
-        augments = Augmentations(
-            padded_img, st.session_state['random_init_dict'])
+        augments = Augmentations(padded_img,
+                                 st.session_state['random_init_dict'])
 
         augmented_img, title = augments.perform_augmentations()
 
@@ -77,10 +78,10 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
                                       center_h + crop_half_height,
                                       center_w - crop_half_width:
                                       center_w + crop_half_width]
-        
     else:
         augments = Augmentations(img,
                                  st.session_state['random_init_dict'])
+
         augmented_img, title = augments.perform_augmentations()
 
     col2.header(title)
