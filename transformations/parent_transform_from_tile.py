@@ -135,7 +135,7 @@ class ParentTransformationsFromTile:
 
 
 
-    def export_padded_parent_meta(self, file_name: str) -> None:
+    def export_padded_parent_meta(self, updated_file_name: str) -> None:
         """
         This function creates an empty dictionary and creates key values with the 
         information in the filename
@@ -154,7 +154,7 @@ class ParentTransformationsFromTile:
 
         #[20100905, 000036, aia.lev1, euv, 12s, 4k, top, bottom, left, right.jpg]
         #[20100905, 000036, hmi.M, 720s, 4k, top, bottom, left, right.jpg]
-        file_name_values = file_name.split("_")
+        file_name_values = updated_file_name.split("_")
 
         # If the instrument is HMI, it lacks a wavelength value so we insert
         # an empty string to take its place
@@ -203,7 +203,7 @@ class ParentTransformationsFromTile:
         """
         return (self.row_offsetted_center_pixel, self.col_offsetted_center_pixel)
 
-    def export_padded_parent_to_file(self, file_name:str, tile_pixel_width:int, tile_pixel_height:int):
+    def export_padded_parent_to_file(self, file_name:str, tile_pixel_width:int, tile_pixel_height:int)->None:
         """
         This function returns a boolean 
         """
@@ -213,33 +213,31 @@ class ParentTransformationsFromTile:
         #updated_file_name is the name of the file
         try:
             parent_image = Image.open(self.parent_file_source)
+
+            # Need to make sure new_size isnt (0,0)
             new_size = (self.parent_img_width_after_padding, self.parent_img_height_after_padding)
 
             padded_parent_image = Image.new("RGB", new_size)
             box_param = (self.calc_padding_width(tile_pixel_width=tile_pixel_width), self.calc_padding_height(tile_pixel_height=tile_pixel_height))
 
-            padded_parent_image = Image.paste(parent_image, box=box_param)
+            Image.Image.paste(parent_image, padded_parent_image, box=box_param[0])
             new_name = self.generate_file_name_from_parent(file_name, tile_pixel_width, tile_pixel_height)
 
-            filepath_output = f"user_sample_data/{new_name}" 
-            padded_parent_image.save(filepath_output, format="JPG")
+            filepath_output = f"user_sample_data/{new_name}"
+            parent_image.save(filepath_output, "JPEG")      # Need to paste onto original image - Jasper
 
         except FileNotFoundError:
             print("😦 File not found 😦")
-
-
-
-
 
 def main():
     """
     Driver function to test our class
     """
     trans_img = ParentTransformationsFromTile(
-        parent_img_width=32,
-        parent_img_height=32,
-        parent_img_width_after_padding=0,
-        parent_img_height_after_padding=0,
+        parent_img_width=254,
+        parent_img_height=254,
+        parent_img_width_after_padding=1,
+        parent_img_height_after_padding=1,
         parent_file_source = "./user_sample_data/20100905_000036_aia.lev1_euv_12s_4k.jpg",
         file_meta_dict = {},
         row_offsetted_center_pixel=0,
@@ -260,20 +258,25 @@ def main():
     generate = trans_img.generate_file_name_from_parent(file_name='20100905_000036_aia.lev1_euv_12s_4k.jpg', tile_pixel_width=64, tile_pixel_height=64)
     print('😭', generate, '😭')
     
-    export_meta = trans_img.export_padded_parent_meta()
+    trans_img.export_padded_parent_meta(generate)
+    print('🥰 Exported padded parent meta img 🥰')
     
-    calc_center_pix = trans_img.calc_padded_parent_center_pixel()
-
+    trans_img.calc_padded_parent_center_pixel()
+    print('🤯 Calculated padded parent center pixel 🤯')
+    
     get_center_pix = trans_img.get_padded_parent_center_pixel()
+    print('🤓', get_center_pix, '🤓')
 
-    export_pad_parent_file = trans_img.export_padded_parent_to_file()
-    
-    
+    trans_img.export_padded_parent_to_file(generate, tile_pixel_height=64, tile_pixel_width=64)
+    print('🤨 Exported padded parent to file 🤨')
+
+
+
     # 🤨 TODO 4/28/23 🤨
-    # call for export_padded_parent_meta()
-    # call for calc_parent_padded_center_pixel()
-    # call for getter of ^^^
     # call for export_padded_parent_to_file()
+        # fix the image.save
+
+
 
 if __name__ == '__main__':
     main()
