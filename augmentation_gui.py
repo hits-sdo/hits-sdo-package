@@ -28,8 +28,7 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
     '''
 
     st.session_state['random_init_dict'] = user_dict
-    augments = Augmentations(img, st.session_state['random_init_dict'])
-    augmented_img, title = augments.perform_augmentations()
+
     # if user defined crop, perform cropped augmentation
     if cord_tup is not None:
         # get the center of the image when it's cropped
@@ -59,9 +58,13 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
             v_padding = (-diff_v, 0)
 
         # st.write((v_padding, h_padding))
+        # np.pad(A, ((top,bottom), (left,right)), 'constant')
+        if len(img.shape) == 3:
+            pad_tuple = (v_padding, h_padding, (0, 0))
+        else:
+            pad_tuple = (v_padding, h_padding)
 
-        # np.pad(A, ((top,bottom),(left,right)), 'constant')
-        padded_img = np.pad(img, (v_padding, h_padding, (0, 0)),
+        padded_img = np.pad(img, pad_tuple,
                             mode='constant')
 
         augments = Augmentations(padded_img,
@@ -242,7 +245,7 @@ def main():
 
                 # Show Preview
                 st.subheader("Cropped Image:")
-                st.image(cropped_image, use_column_width='always')
+                st.image(cropped_image, use_column_width='always',clamp=True)
 
         else:
             col1.image(img, use_column_width='always', clamp=True)
