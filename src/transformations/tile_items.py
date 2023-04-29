@@ -7,6 +7,8 @@ from typing import NamedTuple
 from PIL import Image
 from parent_transform_from_tile import ParentTransformationsFromTile 
 
+base_path = pyprojroot.find_root(pyprojroot.has_dir(".git"))
+
 # {parent_dim: (w,h), parent_padded: (w,h), tile_width....}
 class TileItem(NamedTuple):
     tile_width:int
@@ -43,9 +45,11 @@ class TilerClass:
     parent_width : int
     parent_path_input : str
     tile_meta_dict: dict
+    tile_meta_dict_path: str
     tile_item_list: list[TileItem]
     radius: int
-    #tile_list: list[TileItem]
+    output_dir: str
+    parent_file_name: str
 
     #tile_image: 2D array
     
@@ -69,7 +73,8 @@ class TilerClass:
         num_rows_parent = self.parent_height // self.tile_height
         num_cols_parent = self.parent_width // self.tile_width
 
-        parent_image = Image.open(self.parent_path_input)
+        print(self.parent_path_input)
+        parent_image = Image.open(f"{base_path}/{self.parent_path_input}")
         #transformations/tempTiles
         # create a folder called tiles
         os.makedirs(self.tile_path_output, exist_ok=True)
@@ -86,10 +91,10 @@ class TilerClass:
 
 
                 # save as new tile to a folder called tiles in /user_sample_data/
-                tile_fName = f"{self.tile_path_output}/tile_{start_y}_{start_x}.jpg"
+                tile_fName = f"{self.tile_path_output}/{self.parent_file_name}_tile_{start_y}_{start_x}.jpg"
                 temp_image.save(tile_fName, "JPEG")
                 # create a TileItem
-                tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, tile_fname=tile_fName)
+                tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, tile_fname=f"tile_{start_y}_{start_x}.jpg")
                 self.tile_item_list.append(tile_item)
 
 
@@ -118,7 +123,7 @@ class TilerClass:
     def convert_export_dict_to_json(self):
         """Convert metadata to json"""
         dicti = self.tile_meta_dict
-        with open("tile_meta_data.json", "w") as outfile:
+        with open(f"{self.tile_meta_dict_path}/{self.parent_file_name}_metadata.json", "w") as outfile:
             json.dump(dicti, outfile)
         
         return
@@ -137,14 +142,22 @@ class TilerClass:
         #      2a)      tiles
         #       3) folder of metadata
         #      3a)      json
-        temp_str = self.parent_path_input
+        self.output_dir = f"{base_path}/{self.parent_path_input}"
+        self.output_dir = self.output_dir.replace("raw", "pre-processed")
+        self.output_dir = self.output_dir.replace(".jpg", "")
 
-        temp_str = temp_str.replace("raw", "pre-processed")
-        temp_str = temp_str.replace(".jpg", "")
+        self.tile_path_output = self.output_dir + "/tiles"
 
-        os.mkdir(temp_str)
+        self.tile_meta_dict_path = self.output_dir + "/tile_meta_data"
+
+        self.parent_file_name = self.parent_path_input.find("raw/")
+        self.parent_file_name = self.parent_path_input[self.parent_file_name + 4:]
+        self.parent_file_name = self.parent_file_name.replace(".jpg", "")
 
 
+        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.tile_path_output, exist_ok=True)
+        os.makedirs(self.tile_meta_dict_path, exist_ok=True)
 
         pass
 
@@ -163,9 +176,10 @@ if __name__ == "__main__":
     # parent_height = 4096
     # parent_width = 4096
     # dicti = generate_tile_metadata()
-    tc = TilerClass(None, 1024, 1024, "user_sample_data/tempTiles", 4096, 4096, "user_sample_data/latest_4096_0193.jpg",
-        tempDict, [], 5)
+    tc = TilerClass(None, 1024, 1024, "", 4096, 4096, "data/raw/latest_4096_0193.jpg",
+        tempDict, "", [], 5, "", "")
 
+    tc.generate_tile_fpath_write()
     tc.cut_up_tiles()
     tc.tile_meta_dict = tc.generate_tile_metadata()
     tc.convert_export_dict_to_json()
@@ -178,8 +192,10 @@ if __name__ == "__main__":
     # parent_width : int
     # parent_path_input : str
     # tile_meta_dict: dict
+    # tile_meta_dict_path: str
     # tile_item_list: list[TileItem]
     # radius: int
+    # output_dir: str
 
 # TODO: RADIUS FUNCTION
 # convert to json
