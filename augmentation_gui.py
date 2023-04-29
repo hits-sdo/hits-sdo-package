@@ -28,14 +28,62 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
     '''
 
     st.session_state['random_init_dict'] = user_dict
-    augments = Augmentations(img, st.session_state['random_init_dict'])
-    augmented_img, title = augments.perform_augmentations()
+    augmented_img = None
+    # if user defined crop, perform cropped augmentation
+    if cord_tup is not None:
+        # get the center of the image when it's cropped
+        # cord_tup: (ystart as 1, xstart as 0,height as 3 and width as 2)
+        center_pos = (cord_tup[1] + (cord_tup[3]//2),
+                      cord_tup[0] + (cord_tup[2]//2))
+
+        # get distance from center to each side
+        height, width = img.shape[:2]
+        left_length = center_pos[0]
+        right_length = width - center_pos[0]
+        top_length = center_pos[1]
+        down_length = height - center_pos[1]
+        diff_h = right_length - left_length
+        diff_v = top_length - down_length
+
+        # This is the tuple describng horizontile paddeng >:) XD
+        if diff_h > 0:
+            h_padding = (diff_h, 0)
+        else:
+            h_padding = (0, -diff_h)
+
+        # This is vertical padding parameters
+        if diff_v > 0:
+            v_padding = (0, diff_v)
+        else:
+            v_padding = (-diff_v, 0)
+
+        st.write((v_padding, h_padding))
+
+        # np.pad(A, ((top,bottom),(left,right)), 'constant')
+        padded_img = np.pad(img, (v_padding, h_padding, (0, 0)),
+                            mode='constant')
+
+        augments = Augmentations(
+            padded_img, st.session_state['random_init_dict'])
+
+        augmented_img, title = augments.perform_augmentations()
+
+        # define bounds of crop to match input image
+        center_h, center_w = padded_img.shape[0]//2, padded_img.shape[1]//2
+        crop_half_height, crop_half_width = cord_tup[3]//2, cord_tup[2]//2
+
+        # update crop coordinates
+        augmented_img = augmented_img[center_h - crop_half_height:
+                                      center_h + crop_half_height,
+                                      center_w - crop_half_width:
+                                      center_w + crop_half_width]
+        
+    else:
+        augments = Augmentations(img,
+                                 st.session_state['random_init_dict'])
+        augmented_img, title = augments.perform_augmentations()
 
     col2.header(title)
-    if cord_tup is not None:
-        augmented_img = augmented_img[cord_tup[1]:cord_tup[1] + cord_tup[3],
-                                      cord_tup[0]:cord_tup[0] + cord_tup[2]]
-
     col2.image(augmented_img, use_column_width='always', clamp=True)
     js = json.dumps(st.session_state['random_init_dict'])
 
