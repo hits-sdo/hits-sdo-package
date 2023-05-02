@@ -3,6 +3,7 @@
 
 from augmentation import Augmentations
 import random
+import json
 
 
 class AugmentationList():
@@ -28,7 +29,7 @@ class AugmentationList():
         self.zoom_range = (0.8, 1.2)
         self.brighten_range = (0.5, 1.5)
         self.rotate_range = (-180, 180)
-        self.blur_range = ((1, 1), (2, 2))
+        # self.blur_range = ((1, 1), (2, 2))
         self.translate_range = (-10, 10)
 
     def randomize(self):
@@ -55,7 +56,8 @@ class AugmentationList():
                 dic[key] = random.uniform(self.rotate_range[0],
                                           self.rotate_range[1])
             if (key == 'blur'):
-                dic[key] = self.blur_range[bool(random.getrandbits(1))]
+                # self.blur_range[bool(random.getrandbits(1))]
+                dic[key] = (2, 2)
             if (key == 'translate'):
                 a = random.uniform(self.translate_range[0],
                                    self.translate_range[1])
@@ -72,5 +74,11 @@ class AugmentationList():
 
 
 if __name__ == '__main__':
-    A = AugmentationList(instrument="mag")
-    print(A.randomize())
+    A = AugmentationList(instrument="euv")
+    df = {'Augmentation_1': [], 'Augmentation_2': []}
+    for i in range(100000):
+        df['Augmentation_1'].append(A.randomize())
+        df['Augmentation_2'].append(A.randomize())
+    out_file = open("./data/Augmentationfile_EUV.json", "w")
+    json.dump(df, out_file)
+    out_file.close()
