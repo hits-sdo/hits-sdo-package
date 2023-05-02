@@ -48,6 +48,7 @@ class TilerClass:
     tile_meta_dict_path: str
     tile_item_list: list[TileItem]
     radius: int
+    center: tuple
     output_dir: str
     parent_file_name: str
 
@@ -58,23 +59,14 @@ class TilerClass:
 
     #in this case, tile1 = TileItem(width, )
     
-    def create_subset_tiles(self, user_coordinate,):
-        """Create a user defined set of tiles 
-        that are less than the total  in the parent
-        image
-        """
-        pass
-        # ????
-
-    def cut_up_tiles(self):
+    def cut_set_tiles(self):
         """This function takes the parent image from parent_transform_from_tile
         and divides it up using the tile width and height from TileItem"""
 
         num_rows_parent = self.parent_height // self.tile_height
         num_cols_parent = self.parent_width // self.tile_width
 
-        print(self.parent_path_input)
-        parent_image = Image.open(f"{base_path}/{self.parent_path_input}")
+        parent_image = Image.open(self.parent_path_input)
         #transformations/tempTiles
         # create a folder called tiles
         os.makedirs(self.tile_path_output, exist_ok=True)
@@ -91,8 +83,43 @@ class TilerClass:
 
 
                 # save as new tile to a folder called tiles in /user_sample_data/
-                tile_fName = f"{self.tile_path_output}/{self.parent_file_name}_tile_{start_y}_{start_x}.jpg"
-                temp_image.save(tile_fName, "JPEG")
+                temp_image.save(f"{self.tile_path_output}/tile_{start_y}_{start_x}.jpg", "JPEG")
+           
+                # create a TileItem
+                tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x)
+                self.tile_item_list.append(tile_item)
+
+
+    def cut_subset_tiles(self):
+        """Create a user defined set of tiles that are less than the total  in the parent image
+        """
+        print(self.parent_path_input)
+        print('aaaaaaaaaaa')
+        parent_image = Image.open(f"{base_path}/{self.parent_path_input}")
+        #transformations/tempTiles
+        # create a folder called tiles
+        os.makedirs(self.tile_path_output, exist_ok=True)
+
+        x_1 = self.center[0] - self.radius
+        y_1 = self.center[1] + self.radius
+        base = 2 * self.radius
+        size_tile = self.radius // 2
+        
+        for row in range(x_1, x_1 + base):
+
+            for col in range(y_1, y_1 + base):
+                start_x = col * size_tile
+                start_y = row * size_tile
+                width = size_tile + start_x
+                height = size_tile + start_y
+
+                # crop duplicate
+                temp_image = parent_image.crop((start_x, start_y, width, height))
+
+
+                # save as new tile to a folder called tiles in /user_sample_data/
+                tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}_tile_{start_y}_{start_x}.jpg"
+                temp_image.save(tile_f_name, "JPEG")
                 # create a TileItem
                 tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, tile_fname=f"tile_{start_y}_{start_x}.jpg")
                 self.tile_item_list.append(tile_item)
@@ -162,6 +189,8 @@ class TilerClass:
         pass
 
     def reconstruct_parent_img(self):
+        """Reconstruct parent image from tiles"""
+        
         pass
 
 
@@ -176,11 +205,13 @@ if __name__ == "__main__":
     # parent_height = 4096
     # parent_width = 4096
     # dicti = generate_tile_metadata()
+    cx = 4096//2
+    cy = 4096//2
     tc = TilerClass(None, 1024, 1024, "", 4096, 4096, "data/raw/latest_4096_0193.jpg",
-        tempDict, "", [], 5, "", "")
+        tempDict, "", [], 64, (cx,cy), "", "")
 
     tc.generate_tile_fpath_write()
-    tc.cut_up_tiles()
+    tc.cut_subset_tiles()
     tc.tile_meta_dict = tc.generate_tile_metadata()
     tc.convert_export_dict_to_json()
 
@@ -195,6 +226,7 @@ if __name__ == "__main__":
     # tile_meta_dict_path: str
     # tile_item_list: list[TileItem]
     # radius: int
+    # center: tuple
     # output_dir: str
 
 # TODO: RADIUS FUNCTION
@@ -210,11 +242,11 @@ if __name__ == "__main__":
 #     name: str
 #     url: str
 #     rating: int
-  
+
 # # creating a NamedTuple
 # website1 = Website('GeeksforGeeks',
 #                    'geeksforgeeks.org',
 #                    5)
-  
+
 # # displaying the NamedTuple
 # print(website1)

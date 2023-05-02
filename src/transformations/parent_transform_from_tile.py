@@ -92,10 +92,6 @@ class ParentTransformationsFromTile:
     def export_padded_parent_meta(self):
         pass
 
-    
-
-
-
     def export_padded_parent_to_file(self, filepath_output:str, tile_pixel_width:int, tile_pixel_height:int)->bool:
         """This will export the padded parent image to a file"""
         try:
@@ -114,6 +110,3 @@ class ParentTransformationsFromTile:
 
 
         return True
-
-    def calc_radius_sun(self, ):
-        pass
