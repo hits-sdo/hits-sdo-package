@@ -34,7 +34,8 @@ tempDict = {
 }
 @dataclass
 class TilerClass:
-    """This class divides the parent image into tiles which get
+    """
+    This class divides the parent image into tiles which get
     packaged into TileItems
     """
     parent_image: bytearray
@@ -52,13 +53,12 @@ class TilerClass:
     output_dir: str
     parent_file_name: str
 
-    #tile_image: 2D array
-    
+    # If the tile_width and tile_height are bigger than the radius, throw an exception
+    def __post_init__(self):
+        if self.tile_width > self.radius or self.tile_height > self.radius:
+            raise ValueError("The tile width and height cannot be greater than the radius")
 
-    #tile_group: tuple #user can specify which groupings of tiles they want from parent image
 
-    #in this case, tile1 = TileItem(width, )
-    
     def cut_set_tiles(self):
         """This function takes the parent image from parent_transform_from_tile
         and divides it up using the tile width and height from TileItem"""
@@ -78,50 +78,49 @@ class TilerClass:
                 width = self.tile_width + start_x
                 height = self.tile_height + start_y
 
-                # crop duplicate
+                # Crop duplicate
                 temp_image = parent_image.crop((start_x, start_y, width, height))
 
-
-                # save as new tile to a folder called tiles in /user_sample_data/
+                # Save as new tile to a folder called tiles in /user_sample_data/
                 temp_image.save(f"{self.tile_path_output}/tile_{start_y}_{start_x}.jpg", "JPEG")
            
-                # create a TileItem
+                # Create a TileItem
                 tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x)
                 self.tile_item_list.append(tile_item)
 
 
     def cut_subset_tiles(self):
-        """Create a user defined set of tiles that are less than the total  in the parent image
         """
-        print(self.parent_path_input)
-        print('aaaaaaaaaaa')
+        Create a user defined set of tiles that are less than the total in the parent image
+        """
         parent_image = Image.open(f"{base_path}/{self.parent_path_input}")
-        #transformations/tempTiles
-        # create a folder called tiles
+        # Transformations/tempTiles
+        # Create a folder called tiles
         os.makedirs(self.tile_path_output, exist_ok=True)
 
         x_1 = self.center[0] - self.radius
         y_1 = self.center[1] + self.radius
         base = 2 * self.radius
         size_tile = self.radius // 2
-        
-        for row in range(x_1, x_1 + base):
 
-            for col in range(y_1, y_1 + base):
-                start_x = col * size_tile
-                start_y = row * size_tile
+        for row in range(x_1, x_1 + base, size_tile):
+            for col in range(y_1, y_1 + base, size_tile):
+                start_x = col
+                start_y = row
                 width = size_tile + start_x
                 height = size_tile + start_y
 
-                # crop duplicate
+                # Crop duplicate
                 temp_image = parent_image.crop((start_x, start_y, width, height))
 
 
-                # save as new tile to a folder called tiles in /user_sample_data/
-                tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}_tile_{start_y}_{start_x}.jpg"
+                # Save as new tile to a folder called tiles in /user_sample_data/
+                tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}\
+                    _tile_{start_y}_{start_x}.jpg"
                 temp_image.save(tile_f_name, "JPEG")
-                # create a TileItem
-                tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, tile_fname=f"tile_{start_y}_{start_x}.jpg")
+                # Create a TileItem
+                tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, \
+                    tile_fname=f"tile_{start_y}_{start_x}.jpg")
                 self.tile_item_list.append(tile_item)
 
 
