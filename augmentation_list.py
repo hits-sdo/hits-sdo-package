@@ -5,7 +5,7 @@ from augmentation import Augmentations
 import random
 import json
 from collections import Counter
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 
 
 class AugmentationList():
