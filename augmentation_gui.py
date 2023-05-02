@@ -30,7 +30,7 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
     st.session_state['random_init_dict'] = user_dict
 
     # if user defined crop, perform cropped augmentation
-    if cord_tup is not None:
+    if cord_tup is not None and st.session_state['reg_fill'] == 'Yes':
         # get the center of the image when it's cropped
         # cord_tup: (ystart as 1, xstart as 0,height as 3 and width as 2)
         center_pos = (cord_tup[1] + (cord_tup[3]//2),
@@ -80,7 +80,16 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
         augmented_img = augmented_img[center_h - crop_half_height:
                                       center_h + crop_half_height,
                                       center_w - crop_half_width:
-                                      center_w + crop_half_width]
+                                      center_w + crop_half_width]  
+    elif cord_tup is not None:
+        augments = Augmentations(img[cord_tup[1]:
+                                     cord_tup[1] + cord_tup[3],
+                                     cord_tup[0]:
+                                     cord_tup[0] + cord_tup[2]],
+                                 st.session_state['random_init_dict'])
+
+        augmented_img, title = augments.perform_augmentations()
+
     else:
         augments = Augmentations(img,
                                  st.session_state['random_init_dict'])
@@ -121,6 +130,9 @@ def main():
 
     # Setup Sidebar
     st.sidebar.title("Settings")
+    st.sidebar.radio("Fill voids after augmentatuion?", ('Yes', 'No'),
+                     key='reg_fill')
+
     # Get user-selected instument
     imageInst = st.sidebar.selectbox("Select Instrument", ('euv', 'mag'),
                                      key='instrument',
@@ -244,8 +256,8 @@ def main():
                 ]
 
                 # Show Preview
-                st.subheader("Cropped Image:")
-                st.image(cropped_image, use_column_width='always',clamp=True)
+                st.subheader("Cropped Image")
+                st.image(cropped_image, use_column_width='always', clamp=True)
 
         else:
             col1.image(img, use_column_width='always', clamp=True)
