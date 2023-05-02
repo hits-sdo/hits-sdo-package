@@ -4,6 +4,8 @@
 from augmentation import Augmentations
 import random
 import json
+from collections import Counter
+import matplotlib.pyplot as plt 
 
 
 class AugmentationList():
@@ -74,11 +76,32 @@ class AugmentationList():
 
 
 if __name__ == '__main__':
-    A = AugmentationList(instrument="euv")
+    A = AugmentationList(instrument="mag")
     df = {'Augmentation_1': [], 'Augmentation_2': []}
     for i in range(100000):
         df['Augmentation_1'].append(A.randomize())
         df['Augmentation_2'].append(A.randomize())
-    out_file = open("./data/Augmentationfile_EUV.json", "w")
+
+    # saving a json file
+    out_file = open("./data/Augmentationfile_MAG.json", "w")
     json.dump(df, out_file)
     out_file.close()
+
+    # reading a json file and plotting augmentation count
+    js = json.load(open('./data/Augmentationfile_EUV.json'))
+    a1 = [len(list(d.keys())) for d in list(js['Augmentation_1'])]
+    a2 = [len(list(d.keys())) for d in list(js['Augmentation_2'])]
+
+    plt.subplot(1, 2, 1)
+    c1 = Counter(a1)
+    plt.bar(c1.keys(), c1.values())
+    plt.xlabel('# Augmentations')
+    plt.title('Augmentation 1')
+
+    plt.subplot(1, 2, 2)
+    c2 = Counter(a2)
+    plt.bar(c2.keys(), c2.values())
+    plt.xlabel('# Augmentations')
+    plt.title('Augmentation 2')
+
+    plt.show()
