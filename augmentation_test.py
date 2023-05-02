@@ -23,16 +23,7 @@ from PIL import Image
 from augmentation_list import AugmentationList
 from augmentation import Augmentations
 
-"""glob.glob('/home/geeks/Desktop/gfg/data.txt')"""
-
-# DATA_DIR = '/home/schatterjee/Documents/projects/HITS/data/mag/tiles/'
-# FILE_LIST = glob.glob(DATA_DIR+"*.p")
-# # FILE_NAME = 'tile_20230206_000000_1024_HMIB_0320_0768.p'
-# FILE_NAME = FILE_LIST[0][-42:]
-# l = len("tile_20230206_000634_1024_0171_")
-
 DATA_DIR = './data/euv/tiles/'
-FILE_NAME = 'tile_20230206_000000_1024_HMIB_0320_0768.p'
 len_ = len("tile_20230206_000634_1024_0171_")
 
 EXISTING_FILES = []
@@ -73,18 +64,17 @@ def stitch_adj_imgs(data_dir, file_name):
     coordinates = [
         (0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
 
-    image_len = read_image(data_dir + file_name).shape[0]
-
+    image_len = read_image(data_dir + file_name, 'p').shape[0]
     superImage = np.zeros((3*image_len, 3*image_len))
     for i, j in coordinates:
         i_s = iStart - image_len + i * image_len
         j_s = jStart - image_len + j * image_len
 
         tile_name = \
-            f"{file_name[0:len_]}{str(i_s).zfill(4)}/_{str(j_s).zfill(4)}.p"
+            f"{file_name[0:len_]}{str(i_s).zfill(4)}_{str(j_s).zfill(4)}.p"
 
         if tile_name in EXISTING_FILES:
-            im = read_image(data_dir + tile_name)
+            im = read_image(data_dir + tile_name, 'p')
             superImage[i*image_len: (i+1)*image_len, j*image_len:
                        (j+1)*image_len] = im
 
@@ -98,44 +88,44 @@ class Tests_on_Augmentations(unittest.TestCase):
     """
 
     def setUp(self):
-        """TODO add docstring"""
-        DATA_DIR = './data/euv/tiles/'
-        FILE_NAME = EXISTING_FILES[100]
-        self.image = read_image(DATA_DIR + FILE_NAME)
-        self.superimage = stitch_adj_imgs(DATA_DIR, FILE_NAME)
+        """define augmentation object"""
+        self.DATA_DIR = './data/euv/tiles/'
+        self.FILE_NAME = EXISTING_FILES[59]
+        self.image = read_image(self.DATA_DIR + self.FILE_NAME, 'p')
+        self.superimage = stitch_adj_imgs(self.DATA_DIR, self.FILE_NAME)
         self.augument_list = AugmentationList(instrument='euv')
 
         augment_list = self.augument_list.randomize()
 
         self.augmentations = Augmentations(self.superimage, augment_list)
-        self.assertEqual(True, True)
 
     def test_rotate(self):
-        """TODO add docstring"""
+        """visually check if
+        superimage helps filling voids after image rotation
+        """
         image_ro = self.augmentations.rotate(self.superimage, rotation := 45)
-        plt.subplot(1, 2, 1)
-        plt.imshow(self.image, vmin=0, vmax=255)
-        plt.subplot(1, 2, 2)
-        plt.imshow(image_ro, vmin=0, vmax=255)
         plt.subplot(1, 2, 1)
         plt.imshow(
             self.superimage[self.image.shape[0]:2*self.image.shape[0],
                             self.image.shape[0]:2*self.image.shape[0]],
             vmin=0,
-            vmax=255)
+            vmax=1)
+        plt.title('original image')
 
         plt.subplot(1, 2, 2)
         plt.imshow(
             image_ro[self.image.shape[0]:2*self.image.shape[0],
                      self.image.shape[0]:2*self.image.shape[0]],
             vmin=0,
-            vmax=255)
+            vmax=1)
 
         plt.title(f'rotated image {rotation} deg')
         plt.show()
 
     def test_dim(self):
-        """TODO add docstring"""
+        """
+        test image dimension
+        """
         self.assertEqual(len(self.image.shape), 2)
 
     def test_resolution(self):
@@ -143,14 +133,9 @@ class Tests_on_Augmentations(unittest.TestCase):
         check if input and augmented images
         are of same size
         """
-        image_tr = self.augmentations.translate(self.image)
+        image_tr = self.augmentations.translate(self.image, translate=(5, 5))
         self.assertEqual(self.image.shape, (64, 64))
         self.assertEqual(image_tr.shape, (64, 64))
-        self.assertEqual(
-            image_tr[self.image.shape[0]:2*self.image.shape[0],
-                     self.image.shape[0]:2*self.image.shape[0]].shape,
-            (64, 64)
-        )
 
     def test_range(self):
         """
@@ -163,18 +148,20 @@ class Tests_on_Augmentations(unittest.TestCase):
         """
         check that tile location is correctly identified
         """
-        self.assertEqual(int(FILE_NAME[len_:len_+4]), 320)
+        self.assertEqual(int(self.FILE_NAME[len_:len_+4]), 640)
 
     def test_adjacent_valid(self):
         """
         check if the superimage correcty
         combines the adjacent tiles
         """
-        superImage = stitch_adj_imgs(DATA_DIR, FILE_NAME)
+        superImage = stitch_adj_imgs(self.DATA_DIR, self.FILE_NAME)
         plt.subplot(1, 2, 1)
-        plt.imshow(self.image, vmin=0, vmax=255)
+        plt.imshow(self.image, vmin=0, vmax=1)
+        plt.title('original image')
         plt.subplot(1, 2, 2)
-        plt.imshow(superImage, vmin=0, vmax=255)
+        plt.imshow(superImage, vmin=0, vmax=1)
+        plt.title('superimage')
         plt.show()
 
     def test_flip(self):
@@ -184,22 +171,13 @@ class Tests_on_Augmentations(unittest.TestCase):
         image_tr = self.augmentations.v_flip(self.image)
 
         # ensuring same size
-        self.assertEqual(image_tr.shape, (64, 64))
-        self.assertEqual(
-            image_tr[self.image.shape[0]:2*self.image.shape[0],
-                     self.image.shape[0]:2*self.image.shape[0]].shape,
-            self.image.shape
-            )
+        self.assertEqual(image_tr.shape, self.image.shape)
 
         plt.subplot(1, 2, 1)
-        plt.imshow(self.image, vmin=0, vmax=255)
+        plt.imshow(self.image, vmin=0, vmax=1)
+        plt.title('original image')
         plt.subplot(1, 2, 2)
-        plt.imshow(
-            image_tr[self.image.shape[0]:2*self.image.shape[0],
-                     self.image.shape[0]:2*self.image.shape[0]],
-            vmin=0, vmax=255
-            )
-
+        plt.imshow(image_tr, vmin=0, vmax=1)
         plt.title('Vertically flipped image')
         plt.show()
 
@@ -207,49 +185,43 @@ class Tests_on_Augmentations(unittest.TestCase):
         """
         check if an image is blur kernel size is adequate
         """
-        image_tr = self.augmentations.blur(self.image)
+        image_tr = self.augmentations.blur(self.image, blur=(2, 2))
         # ensuring same size
-        self.assertEqual(image_tr.shape, (64, 64))
-        self.assertEqual(
-            image_tr[self.image.shape[0]:2*self.image.shape[0],
-                     self.image.shape[0]:2*self.image.shape[0]].shape,
-            self.image.shape
-            )
+        self.assertEqual(image_tr.shape, self.image.shape)
 
         plt.subplot(1, 2, 1)
-        plt.imshow(self.image, vmin=0, vmax=255)
+        plt.imshow(self.image, vmin=0, vmax=1)
+        plt.title('original image')
         plt.subplot(1, 2, 2)
-        plt.imshow(
-            image_tr[self.image.shape[0]:2*self.image.shape[0],
-                     self.image.shape[0]:2*self.image.shape[0]],
-            vmin=0,
-            vmax=255
-            )
-
+        plt.imshow(image_tr, vmin=0, vmax=1)
         plt.title('blurred image')
         plt.show()
 
     def test_pole_flip(self):
-        """TODO add docstring"""
+        """
+        test polarity flip for magnetograms
+        """
         # flip and ensure different image
-        image_tr = self.augmentations.p_flip(self.image)
+        image_tr = self.augmentations.p_flip(self.superimage)
         image_tr = image_tr[self.image.shape[0]:2*self.image.shape[0],
                             self.image.shape[0]:2*self.image.shape[0]]
         plt.subplot(1, 3, 1)
-        plt.imshow(self.image, vmin=0, vmax=255, cmap="gray")
+        plt.imshow(self.image, vmin=0, vmax=1, cmap="gray")
+        plt.title('original image')
         plt.subplot(1, 3, 2)
-        plt.imshow(image_tr, vmin=0, vmax=255, cmap="gray")
+        plt.imshow(image_tr, vmin=0, vmax=1, cmap="gray")
         plt.title('Polarity flipped image')
         plt.subplot(1, 3, 3)
         plt.plot(image_tr[30, :], label='transformed image')
-        plt.plot(self.image[30, :], abel='original image')
-        plt.plot([0, 63], [128, 128], '-k')
+        plt.plot(self.image[30, :], label='original image')
+        plt.plot([0, 63], [0.5, 0.5], '-k')
         plt.legend(frameon=False)
         plt.show()
 
     def test_zoom(self):
-        """TODO add docstring"""
-        image_tr = self.augmentations.zoom(self.image, zoom=1)
+        """visually check zooming in and out"""
+        z = 2
+        image_tr = self.augmentations.zoom(self.image, zoom=z)
         s = image_tr.shape
         s1 = self.image.shape
         y1 = s[0]//2 - s1[0]//2
@@ -258,21 +230,31 @@ class Tests_on_Augmentations(unittest.TestCase):
         x2 = s[1]//2 + s1[1]//2
         image_tr = image_tr[y1:y2, x1:x2]
         plt.subplot(1, 2, 1)
-        plt.imshow(self.image, vmin=0, vmax=255)
+        plt.imshow(self.image, vmin=0, vmax=1)
+        plt.title('original image')
         plt.subplot(1, 2, 2)
-        plt.imshow(image_tr, vmin=0, vmax=255)
-        plt.title('zoomed image')
+        plt.imshow(image_tr, vmin=0, vmax=1)
+        if z < 1:
+            plt.title('zoomed out image')
+        else:
+            plt.title('zoomed in image')
         plt.show()
 
     def test_augmentations(self):
         """
         check if combination of augmentations work as expected
         """
+        # applied on superimage
         augmented_img, title = self.augmentations.perform_augmentations()
 
         plt.subplot(1, 2, 1)
-        plt.imshow(self.image, cmap='gray', )
-        plt.imshow(augmented_img, cmap='gray', vmin=0, vmax=1)
+        plt.imshow(self.image, vmin=0, vmax=1)
+        plt.title('original image')
+        plt.subplot(1, 2, 2)
+        plt.imshow(augmented_img[self.image.shape[0]:
+                                 2*self.image.shape[0],
+                                 self.image.shape[0]:
+                                 2*self.image.shape[0]], vmin=0, vmax=1)
         plt.title(title)
         plt.show()
 
