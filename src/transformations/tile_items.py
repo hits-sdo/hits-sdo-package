@@ -92,58 +92,85 @@ class TilerClass:
 
     def cut_subset_tiles(self):
         """
-        Create a user defined set of tiles that are less than the total in the parent image
+        Crops a circle-shaped subset of an image and saves the resulting tiles to a new directory.
+
+        Parameters:
+            - self: An instance of the class that calls this method, which contains the following attributes:
+                * radius (int): The radius of the circle to crop.
+                * parent_height (int): The height of the parent image.
+                * parent_width (int): The width of the parent image.
+                * parent_path_input (str): The path to the parent image.
+                * tile_path_output (str): The path to the directory where the tiles will be saved.
+                * tile_width (int): The width of each tile.
+                * tile_height (int): The height of each tile.
+                * center (Tuple[int, int]): The (x, y) coordinates of the center of the circle to crop.
+                * parent_file_name (str): The name of the parent image file.
+
+        Raises:
+            - AssertionError: If the diameter of the circle is greater than or equal to the parent image size.
+            
+        Description:
+            This function crops a circle-shaped subset of an image using the specified radius and center point.
+            It then divides the cropped area into tiles of a specified size and saves each tile as a separate image
+            in a new directory. The number of tiles to create is determined by the size of the cropped area and the
+            specified tile size.
         """
+
+        # Assert the specified radius is less than the parent image
+        diameter = self.radius * 2
+        assert diameter < self.parent_height and diameter < self.parent_width, \
+            "The diameter of the circle is too large for the parent image, please choose a smaller radius"
+
+
+        # Open the parent image
         parent_image = Image.open(f"{base_path}/{self.parent_path_input}")
-        # Transformations/tempTiles
         # Create a folder called tiles
         os.makedirs(self.tile_path_output, exist_ok=True)
 
-        rad_bound_x = 0
-        itr_x = 0
-        rad_bound_y = 0
-        itr_y = 0
 
-        while rad_bound_x < self.radius and rad_bound_x < self.parent_width:
-            print('rad_bound_x: ', rad_bound_x)
-            rad_bound_x += self.tile_width
-            itr_x += 1
-        print("Parent Width: ", self.parent_width)
+        # Find the number of tiles to build up vertically and across horizontally
+        diameter_bound_x, num_col = 0, 0
+        diameter_bound_y, num_row = 0, 0
 
-        while rad_bound_y < self.radius and rad_bound_y < self.parent_height:
-            print('rad_bound_y: ', rad_bound_y)
-            rad_bound_y += self.tile_height
-            itr_y += 1
-        print("Parent Height: ", self.parent_height)
+        while (diameter_bound_x < diameter) and (diameter_bound_x + self.tile_width < self.parent_width):
+            diameter_bound_x += self.tile_width
+            num_col += 1
 
-        #make sure it works for different size rects. ^^^^
+        while (diameter_bound_y < diameter) and (diameter_bound_y + self.tile_height < self.parent_height):
+            diameter_bound_y += self.tile_height
+            num_row += 1
 
-        x_1 = self.center[0] - itr_x * self.tile_width
-        y_1 = self.center[1] - itr_y * self.tile_height
+        
+        # Find top left corner of the bounding box
+        offset_x = ((num_col * self.tile_width) - diameter) // 2
+        offset_y = ((num_row * self.tile_height) - diameter) // 2
+        
+        x_1 = self.center[0] - self.radius - offset_x
+        y_1 = self.center[1] - self.radius - offset_y
 
-        #print('x & y: ', x_1, y_1)
 
-        for row in range(x_1, x_1 + 2 * itr_x * self.tile_width, self.tile_width):
-            for col in range(y_1, y_1 + 2 * itr_y * self.tile_height, self.tile_height):
-                
-                #print('row & col: ', row, col)
-                start_x = col
-                start_y = row
+        # Create a list of tiles
+        for row in range(num_row):
+            for col in range(num_col):
+                # Find the top left corner and width and height of the tile for cropping
+                start_x = col * self.tile_width + x_1
+                start_y = row * self.tile_height + y_1
                 width = self.tile_width + start_x
                 height = self.tile_height + start_y
 
                 # Crop duplicate
                 temp_image = parent_image.crop((start_x, start_y, width, height))
 
-
-                # Save as new tile to a folder called tiles in /user_sample_data/
+                # Save as new tile to a folder called tiles to /parent_file_path_out/
                 tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}\
                     _tile_{start_y}_{start_x}.jpg"
                 temp_image.save(tile_f_name, "JPEG")
+
                 # Create a TileItem
                 tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, \
                     tile_fname=f"tile_{start_y}_{start_x}.jpg")
                 self.tile_item_list.append(tile_item)
+                
 
 
         # return list
@@ -160,6 +187,7 @@ class TilerClass:
         #     CENTER : (X,Y)
         #     ~RADIUS : 5
         # }
+
     def generate_tile_metadata(self) -> dict:
         """Generate metadata for tiles"""
         self.tile_meta_dict["number_child_tiles"] = len(self.tile_item_list)
