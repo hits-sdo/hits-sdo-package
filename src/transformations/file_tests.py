@@ -13,7 +13,7 @@ JPG_FILE = "blahg.jpg"
 TXT_FILE = "dummy.txt"
 
 
-class Test_File_Methods(unittest.TestCase):
+class TestFileMethods(unittest.TestCase):
     """Class to unit test file methods.
 
     Attributes:
@@ -44,7 +44,7 @@ class Test_File_Methods(unittest.TestCase):
             is_remote=True,
         )
 
-    def test_isJpg(self):
+    def test_is_jpg(self):
         """Tests if a file name ends in .jpgen
         Args: None
         Returns: None
@@ -52,7 +52,7 @@ class Test_File_Methods(unittest.TestCase):
         tempfile = self.input_file.name.lower()
         self.assertRegex(tempfile, "\.*jpg|\.*jpeg")
 
-    def test_fileExists(self):
+    def test_file_exists(self):
         """Tests is the File exists
         Args: None
         Returns: None
@@ -60,14 +60,14 @@ class Test_File_Methods(unittest.TestCase):
         with open(self.input_file2.name):
             self.assertIsNotNone(self.input_file2.name)
 
-    def test_fileisNamed(self):
+    def test_file_is_named(self):
         """Tests if the file has a valid name
         Args: None
         Returns: None
         """
         self.assertIsInstance(self.input_file.name, str)
 
-    def test_pathExists(self):
+    def test_path_exists(self):
         """Tests if the project (transformations) folder exists
         Args: None
         Returns: None
