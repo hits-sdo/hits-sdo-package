@@ -276,6 +276,10 @@ def main():
     # call for export_padded_parent_to_file()
         # fix the image.save
 
+    #TODO 5/3
+        # Use pyprojroot.here() to see a path for the source & destination images?
+        # Consider name change for export_padded_parent_meta() because it doesn't export
+
 
 
 if __name__ == '__main__':
