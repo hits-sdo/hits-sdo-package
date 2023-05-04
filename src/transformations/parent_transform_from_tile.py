@@ -14,9 +14,19 @@ Uses dataclasses to simplify attribute assignment..? read python guide
     5) 🤑 Profit 🤑
     * Paths are hard -> utils function because every team will struggle with this when pivoting to ML
 """
-from PIL import Image
+# from PIL import Image
+import numpy as np
+import cv2
 from dataclasses import dataclass
 from datetime import datetime
+import matplotlib.pyplot as plt
+import os
+import pyprojroot
+root = pyprojroot.find_root(pyprojroot.has_dir(".git"))
+print(root)
+test_data_dir = root/'data'/'raw'
+print(test_data_dir)
+padded_output_dir = root/'data'/'pre-pre-processed'
 
 @dataclass
 class ParentTransformationsFromTile:
@@ -25,8 +35,12 @@ class ParentTransformationsFromTile:
     parent_img_width: int
     parent_img_height: int
 
-    parent_img_width_after_padding: int
-    parent_img_height_after_padding: int
+    # Should this be user-defined? Probably not?
+    # parent_img_width_after_padding: int
+    # parent_img_height_after_padding: int
+
+    tile_pixel_width: int
+    tile_pixel_height: int
 
     # parent_file_is_valid: bool
     # parent_file_file_type: str
@@ -39,41 +53,42 @@ class ParentTransformationsFromTile:
 
 
 
-    def calc_padding_width(self, tile_pixel_width:int) -> tuple:
+    def calc_padding_width(self) -> tuple:
         """If the tile doesn't divide evenly into the parent width then calculates excess padding"""
 
-        leftover_padding = self.parent_img_width % tile_pixel_width
+        leftover_padding = self.parent_img_width % self.tile_pixel_width
         if leftover_padding == 0:
+            print('hello')
             return (0, 0)
-        leftover_padding = tile_pixel_width - leftover_padding
+        leftover_padding = self.tile_pixel_width - leftover_padding
 
         left_padding = leftover_padding // 2
         right_padding = leftover_padding - left_padding
         padding = (left_padding, right_padding)
         return padding
 
-    def calc_padding_height(self, tile_pixel_height:int) -> tuple:
+    def calc_padding_height(self) -> tuple:
         """If the tile doesn't divide evenly into the parent height,
         then calculates excess padding"""
 
-        leftover_padding = self.parent_img_height % tile_pixel_height
+        leftover_padding = self.parent_img_height % self.tile_pixel_height
         if leftover_padding == 0:
             return (0, 0)
 
-        leftover_padding = tile_pixel_height - leftover_padding
+        leftover_padding = self.tile_pixel_height - leftover_padding
 
         top_padding = leftover_padding // 2
         bottom_padding = leftover_padding - top_padding
         padding = (top_padding, bottom_padding)
         return padding
 
-    def calc_corner_pieces(self, tile_pixel_width:int, tile_pixel_height:int) -> tuple:
+    def calc_corner_pieces(self) -> tuple:
         """Using the padding from width and height to
             calculate the padding for the corners of the image.
             Returns a tuple of 2 tuples
         """
-        pad_width = self.calc_padding_width(tile_pixel_width)
-        pad_height = self.calc_padding_height(tile_pixel_height)
+        pad_width = self.calc_padding_width()
+        pad_height = self.calc_padding_height()
 
         top_left = pad_width[0] * pad_height[0]
         top_right = pad_width[1] * pad_height[0]
@@ -83,18 +98,18 @@ class ParentTransformationsFromTile:
         return corner_padding
 
 
-    def calc_overall_padding(self, tile_pixel_width:int, tile_pixel_height:int) -> int:
+    def calc_overall_padding(self) -> int:
         """using the amount of padding we need (now global variables) to calculate the number of
         pixels we need to add for padding also add in the width and height padding methods a
         statement to redefine the value of the padding variables"""
-        calc_width = self.calc_padding_width(tile_pixel_width)
-        calc_height = self.calc_padding_height(tile_pixel_height)
+        calc_width = self.calc_padding_width()
+        calc_height = self.calc_padding_height()
         left_width_padding_pixels = calc_width[0] * self.parent_img_height
         right_width_padding_pixels = calc_width[1] * self.parent_img_height
         top_height_padding_pixels = calc_height[0] * self.parent_img_width
         bottom_height_padding_pixels = calc_height[1] * self.parent_img_width
 
-        corner_padding = self.calc_corner_pieces(tile_pixel_width, tile_pixel_height)
+        corner_padding = self.calc_corner_pieces()
 
         total_padding = left_width_padding_pixels + top_height_padding_pixels + \
                         right_width_padding_pixels + bottom_height_padding_pixels + \
@@ -103,7 +118,7 @@ class ParentTransformationsFromTile:
 
         return total_padding
     
-    def generate_file_name_from_parent(self, file_name: str, tile_pixel_width: int, tile_pixel_height: int) -> str:
+    def generate_file_name_from_parent(self, file_name: str) -> str:
         """
         This function generates a filename from parent with the padding values
             - this function assumes that a CSV file with the name of every image in the directory exists
@@ -118,18 +133,18 @@ class ParentTransformationsFromTile:
         file_name_stem = file_name_stem_list[0] + "." + file_name_stem_list[1]
 
         # Get the top, bottom, left, and right padding values as strings
-        top_and_bottom = self.calc_padding_height(tile_pixel_height=tile_pixel_height)
+        top_and_bottom = self.calc_padding_height()
         (top, bottom) = top_and_bottom
+        print(top, bottom)
 
-        left_and_right = self.calc_padding_width(tile_pixel_width=tile_pixel_width)
+        left_and_right = self.calc_padding_width()
         (left, right) = left_and_right
+        print(left, right)
 
         padding_values = f"{top}_{bottom}_{left}_{right}"
 
         # Reconstruct the file name by concatenating the stem and the extension
-        file_name_stem += "_"
-        file_name_stem += padding_values
-        updated_file_name = file_name_stem + ".jpg"
+        updated_file_name = f"{file_name_stem}_{padding_values}.jpg"
 
         return updated_file_name
 
@@ -193,8 +208,17 @@ class ParentTransformationsFromTile:
             The offset center pixel coordinate is then entered into the dictionary
             The pixel will be calculated with floor division
         """
-        self.row_offsetted_center_pixel = self.parent_img_width_after_padding//2
-        self.col_offsetted_center_pixel = self.parent_img_height_after_padding//2
+        pad_rows = self.calc_padding_height()
+        left_row_pad = pad_rows[0]
+        right_row_pad = pad_rows[1]
+        lr_row_pad = left_row_pad + right_row_pad
+        self.row_offsetted_center_pixel = (self.parent_img_height + lr_row_pad)//2
+
+        pad_cols = self.calc_padding_width()
+        left_col_pad = pad_cols[0]
+        right_col_pad = pad_cols[1]
+        lr_col_pad = left_col_pad + right_col_pad
+        self.col_offsetted_center_pixel = (self.parent_img_width + lr_col_pad)//2
 
     def get_padded_parent_center_pixel(self)->tuple:
         """"
@@ -203,7 +227,7 @@ class ParentTransformationsFromTile:
         """
         return (self.row_offsetted_center_pixel, self.col_offsetted_center_pixel)
 
-    def export_padded_parent_to_file(self, file_name:str, tile_pixel_width:int, tile_pixel_height:int)->None:
+    def export_padded_parent_to_file(self, file_name:str)->None:
         """
         This function returns a boolean 
         """
@@ -212,50 +236,90 @@ class ParentTransformationsFromTile:
         #file path is the directory + updated_file_name
         #updated_file_name is the name of the file
         try:
-            parent_image = Image.open(self.parent_file_source)
+            # plt reads channels as 'BGR' instead of 'RGB'
+            # parent_image = Image.open(self.parent_file_source)
+            parent_image = cv2.imread(self.parent_file_source)
+            # parent_image = plt.imread(self.parent_file_source)
+            # print(parent_image.dtype)
+
 
             # Need to make sure new_size isnt (0,0)
-            new_size = (self.parent_img_width_after_padding, self.parent_img_height_after_padding)
+            pad_rows = self.calc_padding_height()
+            left_row_pad = pad_rows[0]
+            right_row_pad = pad_rows[1]
+            lr_row_pad = left_row_pad + right_row_pad
+            parent_img_height_after_padding = (self.parent_img_height + lr_row_pad)
 
-            padded_parent_image = Image.new("RGB", new_size)
-            box_param = (self.calc_padding_width(tile_pixel_width=tile_pixel_width), self.calc_padding_height(tile_pixel_height=tile_pixel_height))
+            pad_cols = self.calc_padding_width()
+            left_col_pad = pad_cols[0]
+            right_col_pad = pad_cols[1]
+            lr_col_pad = left_col_pad + right_col_pad
+            parent_img_width_after_padding = (self.parent_img_width + lr_col_pad)
+            new_size = (parent_img_width_after_padding, parent_img_height_after_padding)
+            print('New size of padded image = ', new_size)
 
-            Image.Image.paste(parent_image, padded_parent_image, box=box_param[0])
-            new_name = self.generate_file_name_from_parent(file_name, tile_pixel_width, tile_pixel_height)
+            # padded_parent_image = Image.new("RGB", new_size)
+            # Trying a np.zeros array instead
+            padded_parent_image = np.zeros((new_size[0], new_size[1], 3), dtype=np.uint8)
+            box_param = (self.calc_padding_width(),
+                         self.calc_padding_height())
 
-            filepath_output = f"user_sample_data/{new_name}"
-            parent_image.save(filepath_output, "JPEG")      # Need to paste onto original image - Jasper
+            # Image.Image.paste(parent_image, padded_parent_image, box=box_param[0])
+            # Trying a np array instead
+            # Use 0, 0, 0 for black
+            padded_parent_image[:, :] = (0, 0, 0)
+
+            # Offset by top and left padding values ((l_col, r_col), (t_row, b_row))
+            padded_parent_image[box_param[1][0]:box_param[1][0]+parent_image.shape[0],
+                                box_param[0][0]:box_param[0][0]+parent_image.shape[1]] = parent_image
+
+            new_name = self.generate_file_name_from_parent(file_name)
+            print(new_name)
+
+            os.makedirs(padded_output_dir, exist_ok=True)
+            filepath_output = os.path.join(padded_output_dir, new_name)
+
+            # Can cv2 write to .jpg?
+            cv2.imwrite(filepath_output, padded_parent_image)
+            # parent_image.save(filepath_output, "JPEG")      # Need to paste onto original image - Jasper
 
         except FileNotFoundError:
             print("😦 File not found 😦")
+
+
+
+
+
+        
 
 def main():
     """
     Driver function to test our class
     """
+    source_path = os.path.join(f'{test_data_dir}/20100905_000036_aia.lev1_euv_12s_4k.jpg')
     trans_img = ParentTransformationsFromTile(
-        parent_img_width=254,
-        parent_img_height=254,
-        parent_img_width_after_padding=1,
-        parent_img_height_after_padding=1,
-        parent_file_source = "./user_sample_data/20100905_000036_aia.lev1_euv_12s_4k.jpg",
+        parent_img_width=4096,
+        parent_img_height=4096,
+        tile_pixel_width=67,
+        tile_pixel_height=67,
+        parent_file_source = source_path,
         file_meta_dict = {},
         row_offsetted_center_pixel=0,
         col_offsetted_center_pixel=0
     )
 
-    h = trans_img.calc_padding_height(tile_pixel_height=64)
-    w = trans_img.calc_padding_width(tile_pixel_width=64)
+    h = trans_img.calc_padding_height()
+    w = trans_img.calc_padding_width()
 
     print("😱 Height: ", h, "Width: ", w, '😱')
 
-    corner_piece = trans_img.calc_corner_pieces(tile_pixel_height=64, tile_pixel_width=64)
+    corner_piece = trans_img.calc_corner_pieces()
     print('😤', corner_piece, '😤')
 
-    overall = trans_img.calc_overall_padding(tile_pixel_height=64, tile_pixel_width=64)
+    overall = trans_img.calc_overall_padding()
     print('🤩', overall, '🤩')
 
-    generate = trans_img.generate_file_name_from_parent(file_name='20100905_000036_aia.lev1_euv_12s_4k.jpg', tile_pixel_width=64, tile_pixel_height=64)
+    generate = trans_img.generate_file_name_from_parent(file_name='20100905_000036_aia.lev1_euv_12s_4k.jpg')
     print('😭', generate, '😭')
     
     trans_img.export_padded_parent_meta(generate)
@@ -267,7 +331,7 @@ def main():
     get_center_pix = trans_img.get_padded_parent_center_pixel()
     print('🤓', get_center_pix, '🤓')
 
-    trans_img.export_padded_parent_to_file(generate, tile_pixel_height=64, tile_pixel_width=64)
+    trans_img.export_padded_parent_to_file(generate)
     print('🤨 Exported padded parent to file 🤨')
 
 
@@ -276,9 +340,6 @@ def main():
     # call for export_padded_parent_to_file()
         # fix the image.save
 
-    #TODO 5/3
-        # Use pyprojroot.here() to see a path for the source & destination images?
-        # Consider name change for export_padded_parent_meta() because it doesn't export
 
 
 
