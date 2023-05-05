@@ -83,12 +83,12 @@ if __name__ == '__main__':
         df['Augmentation_2'].append(A.randomize())
 
     # saving a json file
-    out_file = open("./data/Augmentationfile_MAG.json", "w")
+    out_file = open("./sdo_augmentation/data/Augmentationfile_MAG.json", "w")
     json.dump(df, out_file)
     out_file.close()
 
     # reading a json file and plotting augmentation count
-    js = json.load(open('./data/Augmentationfile_EUV.json'))
+    js = json.load(open('./sdo_augmentation/data/Augmentationfile_EUV.json'))
     a1 = [len(list(d.keys())) for d in list(js['Augmentation_1'])]
     a2 = [len(list(d.keys())) for d in list(js['Augmentation_2'])]
 
