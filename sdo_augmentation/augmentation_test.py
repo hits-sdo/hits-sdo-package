@@ -23,7 +23,7 @@ from PIL import Image
 from augmentation_list import AugmentationList
 from augmentation import Augmentations
 
-DATA_DIR = './data/euv/tiles/'
+DATA_DIR = './sdo_augmentation/data/euv/tiles/'
 len_ = len("tile_20230206_000634_1024_0171_")
 
 EXISTING_FILES = []
@@ -89,7 +89,7 @@ class Tests_on_Augmentations(unittest.TestCase):
 
     def setUp(self):
         """define augmentation object"""
-        self.DATA_DIR = './data/euv/tiles/'
+        self.DATA_DIR = './sdo_augmentation/data/euv/tiles/'
         self.FILE_NAME = EXISTING_FILES[59]
         self.image = read_image(self.DATA_DIR + self.FILE_NAME, 'p')
         self.superimage = stitch_adj_imgs(self.DATA_DIR, self.FILE_NAME)
