@@ -118,7 +118,7 @@ class TilerClass:
 
         # Assert the specified radius is less than the parent image
         diameter = self.radius * 2
-        assert diameter < self.parent_height and diameter < self.parent_width, \
+        assert diameter <= self.parent_height and diameter <= self.parent_width, \
             "The diameter of the circle is too large for the parent image, please choose a smaller radius"
 
 
@@ -132,11 +132,11 @@ class TilerClass:
         diameter_bound_x, num_col = 0, 0
         diameter_bound_y, num_row = 0, 0
 
-        while (diameter_bound_x < diameter) and (diameter_bound_x + self.tile_width < self.parent_width):
+        while (diameter_bound_x < diameter) and (diameter_bound_x + self.tile_width <= self.parent_width):
             diameter_bound_x += self.tile_width
             num_col += 1
 
-        while (diameter_bound_y < diameter) and (diameter_bound_y + self.tile_height < self.parent_height):
+        while (diameter_bound_y < diameter) and (diameter_bound_y + self.tile_height <= self.parent_height):
             diameter_bound_y += self.tile_height
             num_row += 1
 
@@ -256,8 +256,8 @@ if __name__ == "__main__":
     # dicti = generate_tile_metadata()
     cx = 4096//2
     cy = 4096//2
-    tc = TilerClass(None, 512, 512, "", 4096, 4096, "data/raw/latest_4096_0193.jpg",
-        tempDict, "", [], 1200, (cx,cy), "", "")
+    tc = TilerClass(None, 512, 1024, "", 4096, 4096, "data/raw/latest_4096_0193.jpg",
+        tempDict, "", [], 1792, (cx,cy), "", "")
 
     tc.generate_tile_fpath_write()
     tc.cut_subset_tiles()
