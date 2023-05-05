@@ -231,8 +231,9 @@ def main():
 
                 # TODO: Cannot figure out how to get column width
                 # So used constant 350
+                aspect_ratio = img.shape[1]/img.shape[0]
                 size = 350
-                pilImg = pilImg.resize((size, size))
+                pilImg = pilImg.resize((int(size*aspect_ratio), size))
 
                 # Prompt to select bounds
                 # using the streamlit cropper library
