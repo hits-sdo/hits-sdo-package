@@ -70,7 +70,7 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
         augments = Augmentations(padded_img,
                                  st.session_state['random_init_dict'])
 
-        augmented_img, title = augments.perform_augmentations(fill_void='Blur')
+        augmented_img, title = augments.perform_augmentations()
 
         # define bounds of crop to match input image
         center_h, center_w = padded_img.shape[0]//2, padded_img.shape[1]//2
@@ -90,17 +90,11 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
 
         augmented_img, title = augments.perform_augmentations()
 
-    elif st.session_state['reg_fill'] == 'No':
-        augments = Augmentations(img,
-                                 st.session_state['random_init_dict'])
-
-        augmented_img, title = augments.perform_augmentations()
-
     else:
         augments = Augmentations(img,
                                  st.session_state['random_init_dict'])
 
-        augmented_img, title = augments.perform_augmentations(fill_void='Blur')
+        augmented_img, title = augments.perform_augmentations()
 
     col2.header(title)
     col2.image(augmented_img, use_column_width='always', clamp=True)
