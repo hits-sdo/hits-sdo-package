@@ -26,7 +26,7 @@ def stitch_adj_imgs(data_dir, file_name, EXISTING_FILES):
     """
     stitches adjacent images to return a superimage
     """
-    len_ = file_name[:len('0000_0000.p')]
+    len_ = len(file_name) - len('0000_0000.p')
     iStart = int(file_name[-11:-7])
     jStart = int(file_name[-6:-2])
     # coordinates of surrounding tiles
