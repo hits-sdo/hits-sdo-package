@@ -160,7 +160,8 @@ class TilerClass:
                 # Save as new tile to a folder called tiles to /parent_file_path_out/
                 tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}\
                     _tile_{start_y}_{start_x}.jpg"
-                temp_image.save(tile_f_name, "JPEG")
+                temp_image.save(tile_f_name.replace(" ", ""), "JPEG")
+                os.path.normpath(tile_f_name)
 
                 # Create a TileItem
                 tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, \
@@ -231,11 +232,9 @@ class TilerClass:
         os.makedirs(self.tile_path_output, exist_ok=True)
         os.makedirs(self.tile_meta_dict_path, exist_ok=True)
 
-        pass
-
     def reconstruct_parent_img(self):
         """Reconstruct parent image from tiles"""
-        
+        # raise NotImplementedError
         pass
 
 
@@ -252,8 +251,6 @@ if __name__ == "__main__":
     # dicti = generate_tile_metadata()
     cx = 4096//2
     cy = 4096//2
-    #TODO - Finish defining constants, then create the for loop,
-    #        define the dictionary in the for loop, and run to generate the tiles
 
     image_files = glob.glob(f"{PARENT_IMAGE_INPUT_PATH}/raw/*.jpg")
 
