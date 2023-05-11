@@ -185,6 +185,7 @@ class ParentTransformationsFromTile:
         date_string = file_name_values[0] + file_name_values[1]
 
         # Creating the dictionary
+        # NOTE - The wavelength should be an integer value that comes after the instrument
         self.file_meta_dict = {
             "date_time": datetime.strptime(date_string, "%Y%m%d%H%M%S"),
             "instrument": file_name_values_index_two[0],
@@ -300,8 +301,8 @@ def main():
     trans_img = ParentTransformationsFromTile(
         parent_img_width=4096,
         parent_img_height=4096,
-        tile_pixel_width=67,
-        tile_pixel_height=67,
+        tile_pixel_width=128,
+        tile_pixel_height=128,
         parent_file_source = source_path,
         file_meta_dict = {},
         row_offsetted_center_pixel=0,
