@@ -10,8 +10,7 @@ from parent_transform_from_tile import ParentTransformationsFromTile
 from tqdm import tqdm
 
 
-PARENT_IMAGE_INPUT_PATH = '/mnt/d/AIA171_miniset'
-TILE_OUTPUT_PATH = '/mnt/d/AIA171_miniset_tiles'
+PARENT_IMAGE_INPUT_PATH = 'D:/Mis Documentos/AAResearch/SEARCH/hits-sdo-downloader/AIA171_Miniset_BW'
 TILE_WIDTH = 128
 TILE_HEIGHT = 128
 PARENT_HEIGHT = 4096
@@ -158,9 +157,8 @@ class TilerClass:
                 temp_image = parent_image.crop((start_x, start_y, width, height))
 
                 # Save as new tile to a folder called tiles to /parent_file_path_out/
-                tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}\
-                    _tile_{start_y}_{start_x}.jpg"
-                temp_image.save(tile_f_name.replace(" ", ""), "JPEG")
+                tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}_tile_{start_y}_{start_x}.jpg"
+                temp_image.save(tile_f_name, "JPEG")
                 os.path.normpath(tile_f_name)
 
                 # Create a TileItem
@@ -215,6 +213,7 @@ class TilerClass:
         #      2a)      tiles
         #       3) folder of metadata
         #      3a)      json
+        self.parent_path_input = self.parent_path_input.replace('\\','/')
         self.output_dir = self.parent_path_input
         self.output_dir = self.output_dir.replace("raw", "pre-processed")
         self.output_dir = self.output_dir.replace(".jpg", "")
