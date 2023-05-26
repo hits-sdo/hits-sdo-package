@@ -1,7 +1,7 @@
 """TODO add module docstring"""
 
 
-from augmentation import Augmentations
+from sdo_augmentation.augmentation import Augmentations
 import random
 import json
 from collections import Counter
