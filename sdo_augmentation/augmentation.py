@@ -155,7 +155,17 @@ class Augmentations():
         augment_image = self.image
 
         if fill_void is not None:
-            augment_image += epsilon
+            if fill_void == 'Nearest':
+                v, h = augment_image.shape[0]//2, augment_image.shape[1]//2
+                if len(augment_image.shape) == 3:
+                    augment_image = np.pad(augment_image, ((v, v), (h, h),
+                                                           (0, 0)),
+                                           'edge')
+                else:
+                    augment_image = np.pad(augment_image, ((v, v), (h, h)),
+                                           'edge')
+            else:
+                augment_image += epsilon
         # Initialize the augmented image title showing
         # the sequence of augmentations
         title = 'Original'
@@ -183,6 +193,9 @@ class Augmentations():
         # central part of the augmented image of size TARGET_SHAPE
         augment_image = augment_image[y1:y2, x1:x2]
         mask = (augment_image == 0)
+        kernel = np.ones((10, 10), np.uint8)
+        mask = cv.dilate(mask.astype('float'), kernel, iterations=1)
+
         if fill_void == 'Blur':
             blurred_image = self.blur(augment_image, (self.image.shape[1]//2,
                                                       self.image.shape[0]//2))
@@ -201,13 +214,13 @@ class Augmentations():
 
 
 if __name__ == '__main__':
-    dict = {'rotate': 10}
-    img = Image.open('example_tile.jpg')
+    dict = {'rotate': 10, 'translate':(10, 10)}
+    img = Image.open('./sdo_augmentation/example_tile.jpg')
     img = np.array(img).astype(float) / 255
     # for conversion to grayscale image
-    # img = np.median(img, axis=2)
+    #img = np.median(img, axis=2)
     a = Augmentations(img, dict)
-    fill_type = 'Blur'
+    fill_type = 'Nearest'
     img_t, _ = a.perform_augmentations(fill_void=fill_type)
 
     plt.subplot(1, 2, 1)
