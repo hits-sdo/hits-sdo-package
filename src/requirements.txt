@@ -1,0 +1,8 @@
+# Packager dependencies
+pyprojroot
+Pillow
+numpy
+opencv-python
+matplotlib
+python-dateutil
+tqdm
