@@ -1,7 +1,9 @@
 import numpy as np
 import pickle
-from augmentation_list import AugmentationList
-from augmentation import Augmentations
+import sys
+sys.path.insert(0, '..')
+from sdo_augmentation.augmentation_list import AugmentationList
+from sdo_augmentation.augmentation import Augmentations
 import streamlit as st
 from PIL import Image
 from augmentation_test import read_image
@@ -65,7 +67,7 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
             pad_tuple = (v_padding, h_padding)
 
         padded_img = np.pad(img, pad_tuple,
-                            mode='constant')
+                            mode='edge')
 
         augments = Augmentations(padded_img,
                                  st.session_state['random_init_dict'])
