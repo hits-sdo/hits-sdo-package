@@ -93,6 +93,12 @@ def apply_augmentation(img, col2, user_dict, cord_tup):
 
         augmented_img, title = augments.perform_augmentations()
 
+    elif st.session_state['reg_fill'] == 'No':
+        augments = Augmentations(img,
+                                 st.session_state['random_init_dict'])
+
+        augmented_img, title = augments.perform_augmentations()
+
     else:
         augments = Augmentations(img,
                                  st.session_state['random_init_dict'])
