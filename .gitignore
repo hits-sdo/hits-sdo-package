@@ -148,3 +148,4 @@ wandb/*
 *.jpg
 *.png
 *.fits
+*.pyc
