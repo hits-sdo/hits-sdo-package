@@ -1,13 +1,21 @@
 """TileItem utilizes NamedTuple"""
 import os
 import json
+import glob
 import pyprojroot
 from dataclasses import dataclass
 from typing import NamedTuple 
 from PIL import Image
 from parent_transform_from_tile import ParentTransformationsFromTile 
+from tqdm import tqdm
 
-base_path = pyprojroot.find_root(pyprojroot.has_dir(".git"))
+
+PARENT_IMAGE_INPUT_PATH = 'D:/Mis Documentos/AAResearch/SEARCH/hits-sdo-downloader/AIA171_Miniset_BW'
+TILE_WIDTH = 128
+TILE_HEIGHT = 128
+PARENT_HEIGHT = 4096
+PARENT_WIDTH = 4096
+PARENT_RADIUS = 1792
 
 # {parent_dim: (w,h), parent_padded: (w,h), tile_width....}
 class TileItem(NamedTuple):
@@ -19,19 +27,6 @@ class TileItem(NamedTuple):
 
 #populate with functions in TilerClass
 
-tempDict = {
-    "instrument": "AIA",
-    "date": "APRIL 4, 2021",
-    "time": "12:00:00",
-    "wavelength": "193.4823420",
-    "AIA_or_HMI": "AIA",
-    "padding": "(2,34,5)",
-    "number_child_tiles": "100",
-    "tile_list": (),
-    "center": (0,0),
-    "radius": 5
-
-}
 @dataclass
 class TilerClass:
     """
@@ -66,7 +61,7 @@ class TilerClass:
         num_rows_parent = self.parent_height // self.tile_height
         num_cols_parent = self.parent_width // self.tile_width
 
-        parent_image = Image.open(f"{base_path}/{self.parent_path_input}")
+        parent_image = Image.open(self.parent_path_input)
         #transformations/tempTiles
         # create a folder called tiles
         os.makedirs(self.tile_path_output, exist_ok=True)
@@ -123,7 +118,7 @@ class TilerClass:
 
 
         # Open the parent image
-        parent_image = Image.open(f"{base_path}/{self.parent_path_input}")
+        parent_image = Image.open(self.parent_path_input)
         # Create a folder called tiles
         os.makedirs(self.tile_path_output, exist_ok=True)
 
@@ -162,9 +157,9 @@ class TilerClass:
                 temp_image = parent_image.crop((start_x, start_y, width, height))
 
                 # Save as new tile to a folder called tiles to /parent_file_path_out/
-                tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}\
-                    _tile_{start_y}_{start_x}.jpg"
+                tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}_tile_{start_y}_{start_x}.jpg"
                 temp_image.save(tile_f_name, "JPEG")
+                os.path.normpath(tile_f_name)
 
                 # Create a TileItem
                 tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, \
@@ -218,7 +213,8 @@ class TilerClass:
         #      2a)      tiles
         #       3) folder of metadata
         #      3a)      json
-        self.output_dir = f"{base_path}/{self.parent_path_input}"
+        self.parent_path_input = self.parent_path_input.replace('\\','/')
+        self.output_dir = self.parent_path_input
         self.output_dir = self.output_dir.replace("raw", "pre-processed")
         self.output_dir = self.output_dir.replace(".jpg", "")
 
@@ -235,11 +231,9 @@ class TilerClass:
         os.makedirs(self.tile_path_output, exist_ok=True)
         os.makedirs(self.tile_meta_dict_path, exist_ok=True)
 
-        pass
-
     def reconstruct_parent_img(self):
         """Reconstruct parent image from tiles"""
-        
+        # raise NotImplementedError
         pass
 
 
@@ -256,14 +250,36 @@ if __name__ == "__main__":
     # dicti = generate_tile_metadata()
     cx = 4096//2
     cy = 4096//2
-    tc = TilerClass(None, 512, 1024, "", 4096, 4096, "data/raw/latest_4096_0193.jpg",
-        tempDict, "", [], 1792, (cx,cy), "", "")
 
-    tc.generate_tile_fpath_write()
-    tc.cut_subset_tiles()
-    # tc.cut_set_tiles()
-    tc.tile_meta_dict = tc.generate_tile_metadata()
-    tc.convert_export_dict_to_json()
+    image_files = glob.glob(f"{PARENT_IMAGE_INPUT_PATH}/raw/*.jpg")
+
+    for file in tqdm(image_files):
+        # Define the dictionary
+        tile_meta_dict = {
+            "instrument": "AIA",
+            "date": file.split("_")[0],
+            "time": file.split("_")[1],
+            "wavelength": "171",
+            "AIA_or_HMI": file.split("_")[2].split(".")[0],
+            "padding": "None",
+            "number_child_tiles": f"{PARENT_HEIGHT * PARENT_WIDTH // (TILE_HEIGHT * TILE_WIDTH)}",
+            "tile_list": (),
+            "center": (cx, cy),
+            "radius": PARENT_RADIUS
+        }
+        
+        tc = TilerClass(parent_image=None, tile_height=TILE_HEIGHT, tile_width=TILE_WIDTH, tile_path_output="",
+                        parent_height=PARENT_HEIGHT, parent_width=PARENT_WIDTH,
+                        parent_path_input=file,
+                        tile_meta_dict=tile_meta_dict, tile_meta_dict_path="",
+                        tile_item_list=[], radius=PARENT_RADIUS, center=(cx,cy),
+                        output_dir="", parent_file_name="")
+
+        tc.generate_tile_fpath_write()
+        tc.cut_subset_tiles()
+        # tc.cut_set_tiles()
+        tc.tile_meta_dict = tc.generate_tile_metadata()
+        tc.convert_export_dict_to_json()
 
     # parent_image: bytearray
     # tile_width: int
