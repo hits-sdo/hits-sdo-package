@@ -8,14 +8,15 @@ from typing import NamedTuple
 from PIL import Image
 from parent_transform_from_tile import ParentTransformationsFromTile 
 from tqdm import tqdm
+import numpy as np
 
 
-PARENT_IMAGE_INPUT_PATH = 'D:/Mis Documentos/AAResearch/SEARCH/hits-sdo-downloader/AIA171_Miniset_BW'
-TILE_WIDTH = 128
-TILE_HEIGHT = 128
+PARENT_IMAGE_INPUT_PATH = 'D:/Mis Documentos/AAResearch/SEARCH/hits-sdo-downloader/AIA211_193_171_256'
+TILE_WIDTH = 256
+TILE_HEIGHT = 256
 PARENT_HEIGHT = 4096
 PARENT_WIDTH = 4096
-PARENT_RADIUS = 1792
+PARENT_RADIUS = 1650 + 1.5*TILE_WIDTH
 
 # {parent_dim: (w,h), parent_padded: (w,h), tile_width....}
 class TileItem(NamedTuple):
@@ -122,66 +123,32 @@ class TilerClass:
         # Create a folder called tiles
         os.makedirs(self.tile_path_output, exist_ok=True)
 
+        for i in range(self.parent_height // self.tile_height):
+            for j in range(self.parent_width // self.tile_width):
+                # Calculate centroid                
+                centroid_y = self.tile_height // 2 + j * self.tile_height - self.center[1]
+                centroid_x = self.tile_width // 2 + i * self.tile_width - self.center[0]
 
-        # Find the number of tiles to build up vertically and across horizontally
-        diameter_bound_x, num_col = 0, 0
-        diameter_bound_y, num_row = 0, 0
+                if np.sqrt(centroid_y**2 + centroid_x**2) < self.radius:
 
-        while (diameter_bound_x < diameter) and (diameter_bound_x + self.tile_width <= self.parent_width):
-            diameter_bound_x += self.tile_width
-            num_col += 1
+                    start_x = i * self.tile_width
+                    start_y = j * self.tile_height
 
-        while (diameter_bound_y < diameter) and (diameter_bound_y + self.tile_height <= self.parent_height):
-            diameter_bound_y += self.tile_height
-            num_row += 1
+                    width = self.tile_width + start_x
+                    height = self.tile_height + start_y
 
-        
-        # Find top left corner of the bounding box
-        offset_x = ((num_col * self.tile_width) - diameter) // 2
-        offset_y = ((num_row * self.tile_height) - diameter) // 2
-        
-        x_1 = self.center[0] - self.radius - offset_x
-        y_1 = self.center[1] - self.radius - offset_y
+                    # Crop duplicate
+                    temp_image = parent_image.crop((start_x, start_y, width, height))
 
+                    # Save as new tile to a folder called tiles to /parent_file_path_out/
+                    tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}_tile_{start_y}_{start_x}.jpg"
+                    temp_image.save(tile_f_name, "JPEG")
+                    os.path.normpath(tile_f_name)
 
-        # Create a list of tiles
-        for row in range(num_row):
-            for col in range(num_col):
-                # Find the top left corner and width and height of the tile for cropping
-                start_x = col * self.tile_width + x_1
-                start_y = row * self.tile_height + y_1
-                width = self.tile_width + start_x
-                height = self.tile_height + start_y
-
-                # Crop duplicate
-                temp_image = parent_image.crop((start_x, start_y, width, height))
-
-                # Save as new tile to a folder called tiles to /parent_file_path_out/
-                tile_f_name = f"{self.tile_path_output}/{self.parent_file_name}_tile_{start_y}_{start_x}.jpg"
-                temp_image.save(tile_f_name, "JPEG")
-                os.path.normpath(tile_f_name)
-
-                # Create a TileItem
-                tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, \
-                    tile_fname=f"tile_{start_y}_{start_x}.jpg")
-                self.tile_item_list.append(tile_item)
-                
-
-
-        # return list
-        # pass
-        # {
-        #     INSTRUMENT: jacob will do
-        #     DATE : APRIL 4, 2021
-        #     TIME : 12:00:00
-        #     WAVELENGTH : 193.4823420
-        #     AIA_or_HMI : AIA
-        #     PADDING : (2,34,5)
-        #     NUMBER_CHILD_TILES : 100
-        #     TILES : TILELIST  (OUR LIST OF NAMED TUPLES)
-        #     CENTER : (X,Y)
-        #     ~RADIUS : 5
-        # }
+                    # Create a TileItem
+                    tile_item = TileItem(self.tile_width, self.tile_height, start_y, start_x, \
+                        tile_fname=f"tile_{start_y}_{start_x}.jpg")
+                    self.tile_item_list.append(tile_item)
 
     def generate_tile_metadata(self) -> dict:
         """Generate metadata for tiles"""
@@ -248,8 +215,8 @@ if __name__ == "__main__":
     # parent_height = 4096
     # parent_width = 4096
     # dicti = generate_tile_metadata()
-    cx = 4096//2
-    cy = 4096//2
+    cx = PARENT_WIDTH//2
+    cy = PARENT_HEIGHT//2
 
     image_files = glob.glob(f"{PARENT_IMAGE_INPUT_PATH}/raw/*.jpg")
 
