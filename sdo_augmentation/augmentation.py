@@ -20,6 +20,8 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 from PIL import Image
 
+# Turn off opencv multithreading so that augmentation can be used in some multithreading machines
+cv.setNumThreads(0)
 
 class Augmentations():
     """
