@@ -140,8 +140,15 @@ class Augmentations():
         return image
 
     def p_flip(self, image):
-        """ Polarity flips the image (black to white, white to black) """
-        image = 1 - image
+        """ 
+        1-channel image: Polarity flips the image (black to white, white to black)
+        3-channel image: swap data between r (positive polarity) and g (negative polarity) planes,
+                         g-plane depicts unsigned field saturated at 2000G with sqrt scaling        
+        """
+        if len(image.shape)==3:
+            image = image[:, :, ::-1]
+        else:
+            image = 1 - image
         return image
 
     def perform_augmentations(self, fill_void=None):
