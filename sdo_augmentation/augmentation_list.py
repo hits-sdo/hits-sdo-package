@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 class AugmentationList():
     ''' Class for generating random AugmentationList dictionaries '''
 
-    def __init__(self, instrument: str):
+    def __init__(self, instrument: str,
+                 rotate_range = (-20, 20)):
         '''
         Initialize an object of the AugmentationList class
         Parameters:
@@ -30,7 +31,7 @@ class AugmentationList():
 
         self.zoom_range = (0.8, 1.2)
         self.brighten_range = (0.5, 1.5)
-        self.rotate_range = (-180, 180)
+        self.rotate_range = rotate_range
         # self.blur_range = ((1, 1), (2, 2))
         self.translate_range = (-10, 10)
 
